@@ -1,0 +1,153 @@
+version: "3.8"
+
+services:
+  # Bootstrap/Bootnode (Node-1)
+  node-1:
+    container_name: node-1
+    image: hyperledger/besu:24.10.0
+    volumes:
+      - ./genesis.json:/opt/besu/genesis.json
+      - ./Node-1/data:/opt/besu/data
+    ports:
+      - "8545:8545"
+      - "30303:30303"
+    networks:
+      besu-network:
+        ipv4_address: 172.16.239.11
+    command: >
+      --data-path=/opt/besu/data
+      --genesis-file=/opt/besu/genesis.json
+      --rpc-http-enabled
+      --rpc-http-api=ETH,NET,IBFT
+      --host-allowlist="*"
+      --rpc-http-cors-origins="all"
+      --profile=ENTERPRISE
+      --rpc-http-host=0.0.0.0
+      --p2p-host=172.16.239.11
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Node-2
+  node-2:
+    container_name: node-2
+    image: hyperledger/besu:24.10.0
+    depends_on:
+      node-1:
+        condition: service_healthy
+    volumes:
+      - ./genesis.json:/opt/besu/genesis.json
+      - ./Node-2/data:/opt/besu/data
+    ports:
+      - "8546:8546"
+    networks:
+      besu-network:
+        ipv4_address: 172.16.239.12
+    command: >
+      --data-path=/opt/besu/data
+      --genesis-file=/opt/besu/genesis.json
+      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
+      --p2p-port=30304
+      --rpc-http-enabled
+      --rpc-http-api=ETH,NET,IBFT
+      --host-allowlist="*"
+      --rpc-http-cors-origins="all"
+      --rpc-http-port=8546
+      --profile=ENTERPRISE
+      --rpc-http-host=0.0.0.0
+      --p2p-host=172.16.239.12
+    restart: unless-stopped
+
+  # Node-3
+  node-3:
+    container_name: node-3
+    image: hyperledger/besu:24.10.0
+    depends_on:
+      node-1:
+        condition: service_healthy
+    volumes:
+      - ./genesis.json:/opt/besu/genesis.json
+      - ./Node-3/data:/opt/besu/data
+    ports:
+      - "8547:8547"
+    networks:
+      besu-network:
+        ipv4_address: 172.16.239.13
+    command: >
+      --data-path=/opt/besu/data
+      --genesis-file=/opt/besu/genesis.json
+      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
+      --p2p-port=30305
+      --rpc-http-enabled
+      --rpc-http-api=ETH,NET,IBFT
+      --host-allowlist="*"
+      --rpc-http-cors-origins="all"
+      --rpc-http-port=8547
+      --profile=ENTERPRISE
+      --rpc-http-host=0.0.0.0
+      --p2p-host=172.16.239.13
+    restart: unless-stopped
+
+  # Node-4
+  node-4:
+    container_name: node-4
+    image: hyperledger/besu:24.10.0
+    depends_on:
+      node-1:
+        condition: service_healthy
+    volumes:
+      - ./genesis.json:/opt/besu/genesis.json
+      - ./Node-4/data:/opt/besu/data
+    ports:
+      - "8548:8548"
+    networks:
+      besu-network:
+        ipv4_address: 172.16.239.14
+    command: >
+      --data-path=/opt/besu/data
+      --genesis-file=/opt/besu/genesis.json
+      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
+      --p2p-port=30306
+      --rpc-http-enabled
+      --rpc-http-api=ETH,NET,IBFT
+      --host-allowlist="*"
+      --rpc-http-cors-origins="all"
+      --rpc-http-port=8548
+      --profile=ENTERPRISE
+      --rpc-http-host=0.0.0.0
+      --p2p-host=172.16.239.14
+    restart: unless-stopped
+
+  # Quorum Explorer
+  quorum-explorer:
+    container_name: quorum-explorer
+    image: consensys/quorum-explorer:e175e0b
+    depends_on:
+      node-1:
+        condition: service_healthy
+    ports:
+      - "25000:25000"
+    networks:
+      besu-network:
+        ipv4_address: 172.16.239.15
+    environment:
+      - QE_BASEPATH=/explorer
+      - QE_CONFIG_PATH=/app/config.json
+      - NODE_ENV=production
+      - DISABLE_AUTH=true
+      - NEXTAUTH_URL=http://localhost:25000
+      - NEXTAUTH_URL_INTERNAL=http://localhost:25000
+      - NEXTAUTH_SECRET=bb5c5f6691e81529db5ec1c8ab9e06c7bbb92551e3e26e5d4b2644148de92909
+    volumes:
+      - ./quorum-explorer/explorer-config.json:/app/config.json
+    restart: unless-stopped
+
+networks:
+  besu-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.239.0/24
