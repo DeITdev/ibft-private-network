@@ -17,10 +17,15 @@ else
     exit 1
 fi
 
+# Get the current project name (directory name by default)
+PROJECT_NAME=$(basename $(pwd))
+
+echo -e "${YELLOW}Stopping the network...${NC}"
 $DOCKER_COMPOSE down
 
-echo -e "${YELLOW}Clearing any stale containers...${NC}"
-docker container prune -f
+echo -e "${YELLOW}Removing only containers related to this project...${NC}"
+# Only remove containers related to this compose project
+docker container ls -a --filter "name=${PROJECT_NAME}" --format "{{.ID}}" | xargs -r docker container rm -f
 
 echo -e "${YELLOW}Starting the network...${NC}"
 $DOCKER_COMPOSE up -d
