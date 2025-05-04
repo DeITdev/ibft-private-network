@@ -4,22 +4,22 @@
     {
       "name": "Node1 (Boot)",
       "client": "besu",
-      "rpcUrl": "http://node-1:8545"
+      "rpcUrl": "http://172.16.239.11:8545"
     },
     {
       "name": "Node2",
       "client": "besu",
-      "rpcUrl": "http://node-2:8546"
+      "rpcUrl": "http://172.16.239.12:8546"
     },
     {
       "name": "Node3",
       "client": "besu",
-      "rpcUrl": "http://node-3:8547"
+      "rpcUrl": "http://172.16.239.13:8547"
     },
     {
       "name": "Node4",
       "client": "besu",
-      "rpcUrl": "http://node-4:8548"
+      "rpcUrl": "http://172.16.239.14:8548"
     }
   ],
   "accounts": [

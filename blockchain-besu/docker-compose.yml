@@ -7,7 +7,7 @@ services:
     image: hyperledger/besu:24.10.0
     volumes:
       - ./genesis.json:/opt/besu/genesis.json
-      - ./Node-1/data:/opt/besu/data
+      - node1-data:/opt/besu/data
     ports:
       - "8545:8545"
       - "30303:30303"
@@ -18,7 +18,7 @@ services:
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
       --rpc-http-enabled
-      --rpc-http-api=ETH,NET,IBFT
+      --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG
       --host-allowlist="*"
       --rpc-http-cors-origins="all"
       --profile=ENTERPRISE
@@ -40,7 +40,7 @@ services:
         condition: service_healthy
     volumes:
       - ./genesis.json:/opt/besu/genesis.json
-      - ./Node-2/data:/opt/besu/data
+      - node2-data:/opt/besu/data
     ports:
       - "8546:8546"
     networks:
@@ -52,7 +52,7 @@ services:
       --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
       --p2p-port=30304
       --rpc-http-enabled
-      --rpc-http-api=ETH,NET,IBFT
+      --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG
       --host-allowlist="*"
       --rpc-http-cors-origins="all"
       --rpc-http-port=8546
@@ -60,6 +60,11 @@ services:
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.12
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8546"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Node-3
   node-3:
@@ -70,7 +75,7 @@ services:
         condition: service_healthy
     volumes:
       - ./genesis.json:/opt/besu/genesis.json
-      - ./Node-3/data:/opt/besu/data
+      - node3-data:/opt/besu/data
     ports:
       - "8547:8547"
     networks:
@@ -82,7 +87,7 @@ services:
       --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
       --p2p-port=30305
       --rpc-http-enabled
-      --rpc-http-api=ETH,NET,IBFT
+      --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG
       --host-allowlist="*"
       --rpc-http-cors-origins="all"
       --rpc-http-port=8547
@@ -90,6 +95,11 @@ services:
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.13
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8547"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Node-4
   node-4:
@@ -100,7 +110,7 @@ services:
         condition: service_healthy
     volumes:
       - ./genesis.json:/opt/besu/genesis.json
-      - ./Node-4/data:/opt/besu/data
+      - node4-data:/opt/besu/data
     ports:
       - "8548:8548"
     networks:
@@ -112,7 +122,7 @@ services:
       --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
       --p2p-port=30306
       --rpc-http-enabled
-      --rpc-http-api=ETH,NET,IBFT
+      --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG
       --host-allowlist="*"
       --rpc-http-cors-origins="all"
       --rpc-http-port=8548
@@ -120,6 +130,11 @@ services:
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.14
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8548"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Quorum Explorer
   quorum-explorer:
@@ -127,6 +142,12 @@ services:
     image: consensys/quorum-explorer:e175e0b
     depends_on:
       node-1:
+        condition: service_healthy
+      node-2:
+        condition: service_healthy
+      node-3:
+        condition: service_healthy
+      node-4:
         condition: service_healthy
     ports:
       - "25000:25000"
@@ -151,3 +172,9 @@ networks:
     ipam:
       config:
         - subnet: 172.16.239.0/24
+
+volumes:
+  node1-data:
+  node2-data:
+  node3-data:
+  node4-data:
