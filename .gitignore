@@ -2,3 +2,4 @@ node-modules
 package-lock.json
 networkFiles
 database
+caches
