@@ -3,3 +3,4 @@ package-lock.json
 networkFiles
 database
 caches
+.env
