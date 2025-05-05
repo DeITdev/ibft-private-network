@@ -1,7 +1,9 @@
+require('dotenv').config();
+
 const Web3 = require('web3');
 const EEAClient = require("web3-eea");
-const url = "http://127.0.0.1:8545"
-const chainId = 1337
+const url = "http://127.0.0.1:8545";
+const chainId = 1337;
 
 // Add connection error handling
 let web3;
