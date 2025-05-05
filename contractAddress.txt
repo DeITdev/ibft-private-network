@@ -1,0 +1,8 @@
+contract-simple-storage:
+0x42699A7612A82f1d9C36148af9C77354759b210b
+
+contract-employee-storage:
+0xe52155361a36C7d445F2c6784B14Bf7A3C306e15
+
+contract-attendance-storage:
+0x6486A01e45648B1aDCc51D375Af3a7c0a5e9002a
