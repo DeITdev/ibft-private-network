@@ -154,6 +154,29 @@ services:
         ipv4_address: 172.16.239.20
     command: sleep infinity
 
+  # Add this service to your existing docker-compose.yml
+  blockchain-api:
+    container_name: blockchain-api
+    build:
+      context: ../API
+      dockerfile: Dockerfile
+    volumes:
+      - ../API:/app
+    ports:
+      - "4001:4001"
+    networks:
+      besu-network:
+        ipv4_address: 172.16.239.16
+    depends_on:
+      - node-1
+      - node-2
+      - node-3
+      - node-4
+    restart: unless-stopped
+    environment:
+      - BLOCKCHAIN_URL=http://node-1:8545
+      - BLOCKCHAIN_CHAIN_ID=1337
+
   # Quorum Explorer
   quorum-explorer:
     container_name: quorum-explorer
