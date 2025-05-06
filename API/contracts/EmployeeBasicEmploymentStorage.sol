@@ -1,88 +1,63 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract EmployeeContactInfoStorage {
-    // Contact info structure
-    struct ContactInfo {
-        string cellNumber;
-        string personalEmail;
-        string companyEmail;
-        string preferredContactEmail;
-        string currentAddress;
-        string currentAccommodationType;
-        string permanentAddress;
-        string permanentAccommodationType;
-        string personToBeContacted;
-        string emergencyPhoneNumber;
-        string relation;
+contract EmployeeBasicEmploymentStorage {
+    // Basic employment structure
+    struct BasicEmployment {
+        string employeeNumber;
+        string reportsTo;
+        string branch;
+        uint256 noticeNumberOfDays;
+        string newWorkplace;
+        bool leaveEncashed;
     }
     
-    // Mapping from employee ID to contact info
-    mapping(uint256 => ContactInfo) public employeeContactInfo;
+    // Mapping from employee ID to basic employment info
+    mapping(uint256 => BasicEmployment) public employeeBasicEmployment;
     
-    // Event emitted when contact info is updated
-    event EmployeeContactInfoUpdated(uint256 indexed employeeId);
+    // Event emitted when basic employment info is updated
+    event EmployeeBasicEmploymentUpdated(uint256 indexed employeeId);
     
-    // Store or update employee contact information
-    function storeContactInfo(
+    // Store or update basic employment information
+    function storeBasicEmployment(
         uint256 _employeeId,
-        string memory _cellNumber,
-        string memory _personalEmail,
-        string memory _companyEmail,
-        string memory _preferredContactEmail,
-        string memory _currentAddress,
-        string memory _currentAccommodationType,
-        string memory _permanentAddress,
-        string memory _permanentAccommodationType,
-        string memory _personToBeContacted,
-        string memory _emergencyPhoneNumber,
-        string memory _relation
+        string memory _employeeNumber,
+        string memory _reportsTo,
+        string memory _branch,
+        uint256 _noticeNumberOfDays,
+        string memory _newWorkplace,
+        bool _leaveEncashed
     ) public returns (bool) {
-        ContactInfo storage info = employeeContactInfo[_employeeId];
+        BasicEmployment storage info = employeeBasicEmployment[_employeeId];
         
-        info.cellNumber = _cellNumber;
-        info.personalEmail = _personalEmail;
-        info.companyEmail = _companyEmail;
-        info.preferredContactEmail = _preferredContactEmail;
-        info.currentAddress = _currentAddress;
-        info.currentAccommodationType = _currentAccommodationType;
-        info.permanentAddress = _permanentAddress;
-        info.permanentAccommodationType = _permanentAccommodationType;
-        info.personToBeContacted = _personToBeContacted;
-        info.emergencyPhoneNumber = _emergencyPhoneNumber;
-        info.relation = _relation;
+        info.employeeNumber = _employeeNumber;
+        info.reportsTo = _reportsTo;
+        info.branch = _branch;
+        info.noticeNumberOfDays = _noticeNumberOfDays;
+        info.newWorkplace = _newWorkplace;
+        info.leaveEncashed = _leaveEncashed;
         
-        emit EmployeeContactInfoUpdated(_employeeId);
+        emit EmployeeBasicEmploymentUpdated(_employeeId);
         return true;
     }
     
-    // Get employee contact information
-    function getContactInfo(uint256 _employeeId) public view returns (
-        string memory cellNumber,
-        string memory personalEmail,
-        string memory companyEmail,
-        string memory preferredContactEmail,
-        string memory currentAddress,
-        string memory currentAccommodationType,
-        string memory permanentAddress,
-        string memory permanentAccommodationType,
-        string memory personToBeContacted,
-        string memory emergencyPhoneNumber,
-        string memory relation
+    // Get basic employment information
+    function getBasicEmployment(uint256 _employeeId) public view returns (
+        string memory employeeNumber,
+        string memory reportsTo,
+        string memory branch,
+        uint256 noticeNumberOfDays,
+        string memory newWorkplace,
+        bool leaveEncashed
     ) {
-        ContactInfo storage info = employeeContactInfo[_employeeId];
+        BasicEmployment storage info = employeeBasicEmployment[_employeeId];
         return (
-            info.cellNumber,
-            info.personalEmail,
-            info.companyEmail,
-            info.preferredContactEmail,
-            info.currentAddress,
-            info.currentAccommodationType,
-            info.permanentAddress,
-            info.permanentAccommodationType,
-            info.personToBeContacted,
-            info.emergencyPhoneNumber,
-            info.relation
+            info.employeeNumber,
+            info.reportsTo,
+            info.branch,
+            info.noticeNumberOfDays,
+            info.newWorkplace,
+            info.leaveEncashed
         );
     }
 }

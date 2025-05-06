@@ -1046,5 +1046,14 @@ module.exports = {
   setupEmployee,
   setupEmployeeComplete,
   storeEmployeeData,
-  CONTRACT_TYPES
+  CONTRACT_TYPES,
+  // Add these exports:
+  storeBasicInfo,
+  storeDates,
+  storeContactInfo,
+  storeBasicEmployment,
+  storeCareer,
+  storeApproval,
+  storeFinancial,
+  storePersonal
 };

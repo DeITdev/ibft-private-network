@@ -17,5 +17,8 @@
     "express": "^5.1.0",
     "web3": "^1.2.11",
     "web3-eea": "^0.10.0"
+  },
+  "devDependencies": {
+    "solc": "^0.8.19"
   }
 }
