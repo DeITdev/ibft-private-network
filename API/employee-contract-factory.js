@@ -234,6 +234,19 @@ async function setupEmployee(privateKey, registryAddress, employeeId, employeeNa
       employeeName
     ).encodeABI();
 
+    // Check and register each contract only if the address is valid
+    if (contractAddresses.basicInfoAddress) {
+      await registerContract(privateKey, registryAddress, employeeId, CONTRACT_TYPES.BASIC_INFO, contractAddresses.basicInfoAddress);
+    }
+
+    if (contractAddresses.datesAddress) {
+      await registerContract(privateKey, registryAddress, employeeId, CONTRACT_TYPES.DATES, contractAddresses.datesAddress);
+    }
+
+    if (contractAddresses.contactInfoAddress) {
+      await registerContract(privateKey, registryAddress, employeeId, CONTRACT_TYPES.CONTACT_INFO, contractAddresses.contactInfoAddress);
+    }
+
     // Get transaction count and gas price
     const txCount = await web3.eth.getTransactionCount(account.address, "pending");
     const gasPrice = await web3.eth.getGasPrice();

@@ -143,9 +143,17 @@ router.post("/register-contract-in-registry", async (req, res) => {
   try {
     const { privateKey, registryAddress, employeeId, contractType, contractAddress } = req.body;
 
-    if (!privateKey || !registryAddress || !employeeId || contractType === undefined || !contractAddress) {
+    // Validate all parameters
+    if (!privateKey || !registryAddress || !employeeId || contractType === undefined) {
       return res.status(400).send({
-        error: "Missing required parameters: privateKey, registryAddress, employeeId, contractType, contractAddress"
+        error: "Missing required parameters: privateKey, registryAddress, employeeId, contractType"
+      });
+    }
+
+    // Additional validation for contractAddress
+    if (!contractAddress) {
+      return res.status(400).send({
+        error: "Missing required parameter: contractAddress"
       });
     }
 
