@@ -6,3 +6,4 @@ caches
 .env
 besu.networks
 besu.ports
+compiled

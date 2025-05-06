@@ -2,98 +2,93 @@ const express = require('express');
 const app = express();
 const bodyparser = require('body-parser');
 const { deploy, store, read } = require('./contract');
-const { deployEmployee, storeEmployee, getEmployee } = require('./employee-contract');
 const { deployAttendance, storeAttendance, getAttendance } = require('./attendance-contract');
+const employeeApiV2 = require('./employee-api');
 
-app.use(bodyparser.json());
+// Configure middleware
+app.use(bodyparser.json({ limit: '50mb' }));
+app.use(bodyparser.urlencoded({ extended: true, limit: '50mb' }));
+
+// Handle CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
+    return res.status(200).json({});
+  }
+  next();
+});
 
 // Existing endpoints
 app.post("/deploy", async (req, res) => {
-  let privateKey = req.body.privateKey;
-  let result = await deploy(privateKey);
-  res.send(result);
+  try {
+    let privateKey = req.body.privateKey;
+    let result = await deploy(privateKey);
+    res.send(result);
+  } catch (error) {
+    console.error("API Error:", error);
+    res.status(500).send({ error: error.message });
+  }
 });
 
 app.post("/store", async (req, res) => {
-  let privateKey = req.body.privateKey;
-  let contractAddress = req.body.contractAddress;
-  let value = req.body.value;
-  let result = await store(privateKey, contractAddress, value)
-  res.send(result);
+  try {
+    let privateKey = req.body.privateKey;
+    let contractAddress = req.body.contractAddress;
+    let value = req.body.value;
+    let result = await store(privateKey, contractAddress, value);
+    res.send(result);
+  } catch (error) {
+    console.error("API Error:", error);
+    res.status(500).send({ error: error.message });
+  }
 });
 
 app.get("/read", async (req, res) => {
-  let contractAddress = req.query.contractAddress;
-  let result = await read(contractAddress);
-  res.send(result);
+  try {
+    let contractAddress = req.query.contractAddress;
+    let result = await read(contractAddress);
+    res.send(result);
+  } catch (error) {
+    console.error("API Error:", error);
+    res.status(500).send({ error: error.message });
+  }
 });
 
-app.post("/deploySimple", async (req, res) => {
-  let privateKey = req.body.privateKey;
-  let result = await deploySimple(privateKey);
-  res.send(result);
-});
-
-// New endpoints for Employee contract
+// Legacy employee endpoints
 app.post("/deploy-employee", async (req, res) => {
   try {
     let privateKey = req.body.privateKey;
     let result = await deployEmployee(privateKey);
     res.send(result);
   } catch (error) {
-    console.error("Error deploying employee contract:", error);
+    console.error("API Error:", error);
     res.status(500).send({ error: error.message });
   }
 });
 
 app.post("/store-employee", async (req, res) => {
   try {
-    const {
-      privateKey,
-      contractAddress,
-      id,
-      firstName,
-      gender,
-      dateOfBirth,
-      dateOfJoining,
-      company
-    } = req.body;
+    const privateKey = req.body.privateKey;
+    const contractAddress = req.body.contractAddress;
+    const employeeData = req.body.employeeData || {
+      id: req.body.id,
+      firstName: req.body.firstName,
+      gender: req.body.gender,
+      dateOfBirth: req.body.dateOfBirth,
+      dateOfJoining: req.body.dateOfJoining,
+      company: req.body.company
+    };
 
-    // Validate required fields
-    if (!privateKey || !contractAddress || id === undefined) {
-      return res.status(400).send({
-        error: "Missing required fields: privateKey, contractAddress, and id are required"
-      });
-    }
+    // Mention the multi-contract approach
+    console.log("Note: Consider using the multi-contract approach for better gas efficiency.");
+    console.log("Available at /api/v2/employee/setup-employee-complete");
 
-    // Parse ID to number
-    const employeeId = parseInt(id, 10);
-    if (isNaN(employeeId)) {
-      return res.status(400).send({ error: "Invalid employee ID: must be a number" });
-    }
-
-    // Validate and parse date fields
-    const dob = dateOfBirth ? parseInt(dateOfBirth, 10) : 0;
-    const doj = dateOfJoining ? parseInt(dateOfJoining, 10) : 0;
-
-    if (isNaN(dob) || isNaN(doj)) {
-      return res.status(400).send({ error: "Invalid date format: dates must be numeric timestamps" });
-    }
-
-    const result = await storeEmployee(
-      privateKey,
-      contractAddress,
-      employeeId,
-      firstName || "",
-      gender || "",
-      dob,
-      doj,
-      company || ""
-    );
-
+    let result = await storeEmployee(privateKey, contractAddress, employeeData);
     res.send(result);
   } catch (error) {
-    console.error("Error storing employee data:", error);
+    console.error("API Error:", error);
     res.status(500).send({ error: error.message });
   }
 });
@@ -103,120 +98,77 @@ app.get("/get-employee", async (req, res) => {
     const contractAddress = req.query.contractAddress;
     const id = req.query.id;
 
-    // Validate inputs
-    if (!contractAddress) {
-      return res.status(400).send({ error: "Contract address is required" });
+    if (!contractAddress || !id) {
+      return res.status(400).send({ error: "Missing required parameters: contractAddress and id" });
     }
 
-    if (!id) {
-      return res.status(400).send({ error: "Employee ID is required" });
-    }
-
-    // Parse ID to make sure it's a valid number
-    const employeeId = parseInt(id, 10);
-    if (isNaN(employeeId)) {
-      return res.status(400).send({ error: "Invalid employee ID: must be a number" });
-    }
-
-    const result = await getEmployee(contractAddress, employeeId);
+    const result = await getEmployee(contractAddress, id);
     res.send(result);
   } catch (error) {
-    console.error("Error getting employee data:", error);
+    console.error("API Error:", error);
     res.status(500).send({ error: error.message });
   }
 });
 
-// Deploy Attendance Contract
+// Attendance endpoints
 app.post("/deploy-attendance", async (req, res) => {
   try {
     let privateKey = req.body.privateKey;
     let result = await deployAttendance(privateKey);
     res.send(result);
   } catch (error) {
-    console.error("Error deploying attendance contract:", error);
+    console.error("API Error:", error);
     res.status(500).send({ error: error.message });
   }
 });
 
-// Store Attendance Record
 app.post("/store-attendance", async (req, res) => {
   try {
-    const {
-      privateKey,
-      contractAddress,
-      id,
-      employeeName,
-      attendanceDate,
-      status,
-      company
-    } = req.body;
-
-    // Validate required fields
-    if (!privateKey || !contractAddress || id === undefined) {
-      return res.status(400).send({
-        error: "Missing required fields: privateKey, contractAddress, and id are required"
-      });
-    }
-
-    // Parse ID to number
-    const attendanceId = parseInt(id, 10);
-    if (isNaN(attendanceId)) {
-      return res.status(400).send({ error: "Invalid attendance ID: must be a number" });
-    }
-
-    // Validate and parse date field
-    const attDate = attendanceDate ? parseInt(attendanceDate, 10) : 0;
-
-    if (isNaN(attDate)) {
-      return res.status(400).send({ error: "Invalid date format: date must be a numeric timestamp" });
-    }
-
-    const result = await storeAttendance(
-      privateKey,
-      contractAddress,
-      attendanceId,
-      employeeName || "",
-      attDate,
-      status || "",
-      company || ""
-    );
-
+    const { privateKey, contractAddress, id, employeeName, attendanceDate, status, company } = req.body;
+    let result = await storeAttendance(privateKey, contractAddress, id, employeeName, attendanceDate, status, company);
     res.send(result);
   } catch (error) {
-    console.error("Error storing attendance data:", error);
+    console.error("API Error:", error);
     res.status(500).send({ error: error.message });
   }
 });
 
-// Get Attendance Record
 app.get("/get-attendance", async (req, res) => {
   try {
     const contractAddress = req.query.contractAddress;
     const id = req.query.id;
 
-    // Validate inputs
-    if (!contractAddress) {
-      return res.status(400).send({ error: "Contract address is required" });
+    if (!contractAddress || !id) {
+      return res.status(400).send({ error: "Missing required parameters: contractAddress and id" });
     }
 
-    if (!id) {
-      return res.status(400).send({ error: "Attendance ID is required" });
-    }
-
-    // Parse ID to make sure it's a valid number
-    const attendanceId = parseInt(id, 10);
-    if (isNaN(attendanceId)) {
-      return res.status(400).send({ error: "Invalid attendance ID: must be a number" });
-    }
-
-    const result = await getAttendance(contractAddress, attendanceId);
+    const result = await getAttendance(contractAddress, id);
     res.send(result);
   } catch (error) {
-    console.error("Error getting attendance data:", error);
+    console.error("API Error:", error);
     res.status(500).send({ error: error.message });
   }
 });
 
-app.listen(4001, () => {
-  console.log("server started");
+// Mount the new multi-contract employee API
+app.use('/api/v2/employee', employeeApiV2);
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.send({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    version: '2.0.0'
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).send({ error: "Internal server error" });
+});
+
+const PORT = process.env.PORT || 4001;
+app.listen(PORT, () => {
+  console.log(`Blockchain API server running on port ${PORT}`);
 });

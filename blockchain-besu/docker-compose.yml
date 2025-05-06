@@ -26,6 +26,10 @@ services:
       --p2p-host=172.16.239.11
       --rpc-http-port=8545
       --network-id=1337
+      --min-gas-price=0
+      --target-gas-limit=1000000000
+      --tx-pool-max-size=50000
+      --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "ls", "/opt/besu/data"]
@@ -63,6 +67,10 @@ services:
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.12
       --network-id=1337
+      --min-gas-price=0
+      --target-gas-limit=1000000000
+      --tx-pool-max-size=50000
+      --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "ls", "/opt/besu/data"]
@@ -100,6 +108,10 @@ services:
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.13
       --network-id=1337
+      --min-gas-price=0
+      --target-gas-limit=1000000000
+      --tx-pool-max-size=50000
+      --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "ls", "/opt/besu/data"]
@@ -137,6 +149,10 @@ services:
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.14
       --network-id=1337
+      --min-gas-price=0
+      --target-gas-limit=1000000000
+      --tx-pool-max-size=50000
+      --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "ls", "/opt/besu/data"]
