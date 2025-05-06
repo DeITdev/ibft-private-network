@@ -1,4 +1,4 @@
-// deploy-attendance-contract.js
+// deploy-employee-contract.js
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -6,12 +6,12 @@ const Web3 = require('web3');
 const Tx = require("ethereumjs-tx").Transaction;
 const Common = require('ethereumjs-common');
 
-// Get environment config
+// Environment configuration
 const url = process.env.BLOCKCHAIN_URL || 'http://localhost:8545';
 const chainId = parseInt(process.env.BLOCKCHAIN_CHAIN_ID || '1337');
-const privateKey = process.env.PRIVATE_KEY || '';
+const privateKey = process.env.PRIVATE_KEY;
 
-// Check if private key is provided
+// Validate private key
 if (!privateKey) {
   console.error('Error: PRIVATE_KEY environment variable is required');
   process.exit(1);
@@ -20,17 +20,21 @@ if (!privateKey) {
 // Initialize web3
 const web3 = new Web3(url);
 
-// Path to compiled contract - Updated to use the correct file name
-const contractPath = path.resolve(__dirname, 'compiled', 'AttendanceStorage.json');
+// Path to compiled contract
+const contractPath = path.resolve(__dirname, 'compiled', 'EmployeeContract.json');
+
+// Check if contract exists
 if (!fs.existsSync(contractPath)) {
-  console.error('Error: Compiled contract not found at:', contractPath);
+  console.error(`Error: Compiled contract not found at ${contractPath}`);
+  console.error('Make sure to compile the contract first with compile-employee-storage.js');
   process.exit(1);
 }
 
 // Load the contract
 const contract = require(contractPath);
 
-async function deployContract() {
+// Deploy the contract
+async function deployEmployeeContract() {
   try {
     console.log('Connecting to blockchain at:', url);
 
@@ -57,11 +61,11 @@ async function deployContract() {
     console.log('Transaction count:', txCount);
     console.log('Gas price:', gasPrice);
 
-    // Build transaction object
+    // Build transaction object with gas limit high enough for the contract
     const txObj = {
       nonce: web3.utils.toHex(txCount),
       gasPrice: web3.utils.toHex(gasPrice || '0x1'),
-      gasLimit: web3.utils.toHex(5000000), // Higher gas limit for complex contract
+      gasLimit: web3.utils.toHex(8000000), // Higher gas limit for combined contract
       data: contract.bytecode,
       chainId: chainId
     };
@@ -90,16 +94,16 @@ async function deployContract() {
     // Send transaction
     const receipt = await web3.eth.sendSignedTransaction(rawTx);
 
-    console.log('AttendanceStorage contract deployed successfully!');
+    console.log('Employee contract deployed successfully!');
     console.log('Contract address:', receipt.contractAddress);
 
-    // Save contract address to .env file and update both API and consumer environment
+    // Save contract address to .env file
     updateEnvFile(receipt.contractAddress);
     updateConsumerEnvFile(receipt.contractAddress);
 
     return {
       success: true,
-      contractAddress: receipt.contractAddress
+      employeeContractAddress: receipt.contractAddress
     };
   } catch (error) {
     console.error('Error deploying contract:', error);
@@ -118,25 +122,25 @@ function updateEnvFile(contractAddress) {
     if (fs.existsSync(envPath)) {
       let envContent = fs.readFileSync(envPath, 'utf8');
 
-      if (envContent.includes('CONTRACT_ADDRESS_ATTENDANCE=')) {
+      if (envContent.includes('EMPLOYEE_CONTRACT_ADDRESS=')) {
         // Replace existing entry
         envContent = envContent.replace(
-          /CONTRACT_ADDRESS_ATTENDANCE=.*/,
-          `CONTRACT_ADDRESS_ATTENDANCE=${contractAddress}`
+          /EMPLOYEE_CONTRACT_ADDRESS=.*/,
+          `EMPLOYEE_CONTRACT_ADDRESS=${contractAddress}`
         );
       } else {
         // Add new entry
-        envContent += `\nCONTRACT_ADDRESS_ATTENDANCE=${contractAddress}\n`;
+        envContent += `\nEMPLOYEE_CONTRACT_ADDRESS=${contractAddress}\n`;
       }
 
       fs.writeFileSync(envPath, envContent);
-      console.log('Updated API .env file with new contract address');
+      console.log('Updated .env file with new contract address');
     } else {
-      fs.writeFileSync(envPath, `CONTRACT_ADDRESS_ATTENDANCE=${contractAddress}\n`);
-      console.log('Created API .env file with contract address');
+      fs.writeFileSync(envPath, `EMPLOYEE_CONTRACT_ADDRESS=${contractAddress}\n`);
+      console.log('Created .env file with contract address');
     }
   } catch (error) {
-    console.error('Error updating API .env file:', error.message);
+    console.error('Error updating .env file:', error.message);
   }
 }
 
@@ -148,15 +152,15 @@ function updateConsumerEnvFile(contractAddress) {
     if (fs.existsSync(consumerEnvPath)) {
       let envContent = fs.readFileSync(consumerEnvPath, 'utf8');
 
-      if (envContent.includes('CONTRACT_ADDRESS_ATTENDANCE=')) {
+      if (envContent.includes('EMPLOYEE_CONTRACT_ADDRESS=')) {
         // Replace existing entry
         envContent = envContent.replace(
-          /CONTRACT_ADDRESS_ATTENDANCE=.*/,
-          `CONTRACT_ADDRESS_ATTENDANCE=${contractAddress}`
+          /EMPLOYEE_CONTRACT_ADDRESS=.*/,
+          `EMPLOYEE_CONTRACT_ADDRESS=${contractAddress}`
         );
       } else {
         // Add new entry
-        envContent += `\nCONTRACT_ADDRESS_ATTENDANCE=${contractAddress}\n`;
+        envContent += `\nEMPLOYEE_CONTRACT_ADDRESS=${contractAddress}\n`;
       }
 
       fs.writeFileSync(consumerEnvPath, envContent);
@@ -180,7 +184,7 @@ function updateConsumerEnvFile(contractAddress) {
       }
 
       fs.writeFileSync(consumerEnvPath,
-        `${baseEnvContent}CONTRACT_ADDRESS_ATTENDANCE=${contractAddress}\n`);
+        `${baseEnvContent}EMPLOYEE_CONTRACT_ADDRESS=${contractAddress}\n`);
       console.log('Created consumer .env file with contract address');
     }
   } catch (error) {
@@ -189,13 +193,19 @@ function updateConsumerEnvFile(contractAddress) {
 }
 
 // Run the deployment
-deployContract()
+deployEmployeeContract()
   .then(result => {
     if (result.success) {
-      console.log('Deployment completed successfully!');
+      console.log('\nDeployment Results:');
+      console.log('Employee Contract:', result.employeeContractAddress);
+
+      console.log('\nUpdate your .env file with:');
+      console.log(`EMPLOYEE_CONTRACT_ADDRESS=${result.employeeContractAddress}`);
+
+      console.log('\nDeployment completed successfully!');
       process.exit(0);
     } else {
-      console.error('Deployment failed:', result.error);
+      console.error('\nDeployment failed:', result.error);
       process.exit(1);
     }
   })

@@ -710,7 +710,7 @@ async function main() {
       console.log('Using default employee ID: 1');
 
       // Read data for employee ID 1
-      await readAllEmployeeData(1);
+      await readAllEmployeeData(3);
     } else {
       // Display employees
       console.log('Employees in registry:');

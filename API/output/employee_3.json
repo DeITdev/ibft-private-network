@@ -1,23 +1,23 @@
 {
-  "employeeId": "1",
-  "name": "Danar ikram kusuma",
+  "employeeId": "3",
+  "name": "danar",
   "basicInfo": {
-    "firstName": "Danarqwerty",
-    "middleName": "ikram",
-    "lastName": "kusuma",
-    "fullName": "Danarqwerty ikram kusuma",
-    "gender": "Male",
-    "salutation": "Master",
+    "firstName": "danar",
+    "middleName": "Not set",
+    "lastName": "Not set",
+    "fullName": "danar",
+    "gender": "Genderqueer",
+    "salutation": "Not set",
     "company": "Fiyansa",
-    "department": "Customer Service",
-    "designation": "Accountant",
+    "department": "Not set",
+    "designation": "Not set",
     "status": "Active"
   },
   "dates": {
     "dateOfBirth": "01/01/1970",
     "dateOfJoining": "01/01/1970",
     "dateOfRetirement": "01/01/1970",
-    "creationDate": "05/05/2025",
+    "creationDate": "06/05/2025",
     "modificationDate": "06/05/2025",
     "scheduledConfirmationDate": "Not set",
     "finalConfirmationDate": "Not set",
@@ -28,17 +28,17 @@
     "heldOnDate": "Not set"
   },
   "contactInfo": {
-    "cellNumber": "0832535",
-    "personalEmail": "danar@gmail.com",
-    "companyEmail": "test@gmail.com",
+    "cellNumber": "Not set",
+    "personalEmail": "Not set",
+    "companyEmail": "Not set",
     "preferredContactEmail": "Not set",
     "currentAddress": "Not set",
     "currentAccommodationType": "Not set",
     "permanentAddress": "Not set",
     "permanentAccommodationType": "Not set",
-    "personToBeContacted": "susis",
-    "emergencyPhoneNumber": "29074179",
-    "relation": "afwer"
+    "personToBeContacted": "Not set",
+    "emergencyPhoneNumber": "Not set",
+    "relation": "Not set"
   },
   "basicEmployment": {
     "employeeNumber": "Not set",
@@ -51,7 +51,7 @@
   "career": {
     "reasonForLeaving": "Not set",
     "feedback": "Not set",
-    "employmentType": "Apprentice",
+    "employmentType": "Not set",
     "grade": "Not set",
     "jobApplicant": "Not set",
     "defaultShift": "Not set"
