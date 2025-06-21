@@ -1,6 +1,7 @@
 {
   "employeeId": "1",
-  "name": "Danar ikram kusuma",
+  "name": "Danarqwerty ikram kusuma",
+  "status": "Active",
   "basicInfo": {
     "firstName": "Danarqwerty",
     "middleName": "ikram",
@@ -40,7 +41,7 @@
     "emergencyPhoneNumber": "29074179",
     "relation": "afwer"
   },
-  "basicEmployment": {
+  "employment": {
     "employeeNumber": "Not set",
     "reportsTo": "Not set",
     "branch": "Not set",

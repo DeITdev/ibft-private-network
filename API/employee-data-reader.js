@@ -9,220 +9,27 @@ const path = require('path');
 const web3Url = process.env.BLOCKCHAIN_URL || 'http://localhost:8545';
 const web3 = new Web3(web3Url);
 
-// Contract addresses
-const registryAddress = process.env.REGISTRY_CONTRACT_ADDRESS || '0xDE87AF9156a223404885002669D3bE239313Ae33';
-const basicInfoAddress = process.env.BASIC_INFO_CONTRACT_ADDRESS || '0x686AfD6e502A81D2e77f2e038A23C0dEf4949A20';
-const datesAddress = process.env.DATES_CONTRACT_ADDRESS || '0x664D6EbAbbD5cf656eD07A509AFfBC81f9615741';
-const contactInfoAddress = process.env.CONTACT_INFO_CONTRACT_ADDRESS || '0x37A49B1F380c74e47A1544Ac2BB5404FF159275c';
-const basicEmploymentAddress = process.env.BASIC_EMPLOYMENT_CONTRACT_ADDRESS || '0x1Be01cBe5a96FBAc978B3f25C3eB5d541233Ab27';
-const careerAddress = process.env.CAREER_CONTRACT_ADDRESS || '0x1024d31846670b356f952F4c002E3758Ab9c4FFC';
-const approvalAddress = process.env.APPROVAL_CONTRACT_ADDRESS || '0xE6BAb1eAc80e9d68BD76c3bb61abad86133109DD';
-const financialAddress = process.env.FINANCIAL_CONTRACT_ADDRESS || '0x0d8425cEa91B9c8d7Dd2bE278Fb945aF78Aba57b';
-const personalAddress = process.env.PERSONAL_CONTRACT_ADDRESS || '0x520F3536Ce622A9C90d9E355b2547D9e5cfb76fE';
+// Contract address for the single EmployeeContract
+const employeeContractAddress = process.env.EMPLOYEE_CONTRACT_ADDRESS || '0x0';
 
-// Define ABIs for each contract
-// These are simplified ABIs with just the methods we need to read data
-const registryAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "name": "employeeIds",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "name": "employees",
-    "outputs": [
-      { "internalType": "uint256", "name": "id", "type": "uint256" },
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "bool", "name": "exists", "type": "bool" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getEmployeeCount",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
+// Load the contract ABI for the single EmployeeContract
+const employeeContractPath = path.resolve(__dirname, 'compiled', 'EmployeeContract.json');
+let employeeContractAbi = [];
+
+try {
+  if (fs.existsSync(employeeContractPath)) {
+    const contractJson = require(employeeContractPath);
+    employeeContractAbi = contractJson.abi;
+    console.log("Employee contract ABI loaded successfully");
+  } else {
+    console.warn(`Warning: Employee contract not found at ${employeeContractPath}`);
   }
-];
+} catch (error) {
+  console.error(`Error loading contract ABI: ${error.message}`);
+}
 
-const basicInfoAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getBasicInfo",
-    "outputs": [
-      { "internalType": "string", "name": "firstName", "type": "string" },
-      { "internalType": "string", "name": "middleName", "type": "string" },
-      { "internalType": "string", "name": "lastName", "type": "string" },
-      { "internalType": "string", "name": "fullName", "type": "string" },
-      { "internalType": "string", "name": "gender", "type": "string" },
-      { "internalType": "string", "name": "salutation", "type": "string" },
-      { "internalType": "string", "name": "company", "type": "string" },
-      { "internalType": "string", "name": "department", "type": "string" },
-      { "internalType": "string", "name": "designation", "type": "string" },
-      { "internalType": "string", "name": "status", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const datesAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getBasicDates",
-    "outputs": [
-      { "internalType": "uint256", "name": "dateOfBirth", "type": "uint256" },
-      { "internalType": "uint256", "name": "dateOfJoining", "type": "uint256" },
-      { "internalType": "uint256", "name": "dateOfRetirement", "type": "uint256" },
-      { "internalType": "uint256", "name": "creationDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "modificationDate", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getAdditionalDates",
-    "outputs": [
-      { "internalType": "uint256", "name": "scheduledConfirmationDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "finalConfirmationDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "contractEndDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "resignationLetterDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "relievingDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "encashmentDate", "type": "uint256" },
-      { "internalType": "uint256", "name": "heldOnDate", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const contactInfoAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getContactInfo",
-    "outputs": [
-      { "internalType": "string", "name": "cellNumber", "type": "string" },
-      { "internalType": "string", "name": "personalEmail", "type": "string" },
-      { "internalType": "string", "name": "companyEmail", "type": "string" },
-      { "internalType": "string", "name": "preferredContactEmail", "type": "string" },
-      { "internalType": "string", "name": "currentAddress", "type": "string" },
-      { "internalType": "string", "name": "currentAccommodationType", "type": "string" },
-      { "internalType": "string", "name": "permanentAddress", "type": "string" },
-      { "internalType": "string", "name": "permanentAccommodationType", "type": "string" },
-      { "internalType": "string", "name": "personToBeContacted", "type": "string" },
-      { "internalType": "string", "name": "emergencyPhoneNumber", "type": "string" },
-      { "internalType": "string", "name": "relation", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const basicEmploymentAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getBasicEmployment",
-    "outputs": [
-      { "internalType": "string", "name": "employeeNumber", "type": "string" },
-      { "internalType": "string", "name": "reportsTo", "type": "string" },
-      { "internalType": "string", "name": "branch", "type": "string" },
-      { "internalType": "uint256", "name": "noticeNumberOfDays", "type": "uint256" },
-      { "internalType": "string", "name": "newWorkplace", "type": "string" },
-      { "internalType": "bool", "name": "leaveEncashed", "type": "bool" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const careerAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getCareer",
-    "outputs": [
-      { "internalType": "string", "name": "reasonForLeaving", "type": "string" },
-      { "internalType": "string", "name": "feedback", "type": "string" },
-      { "internalType": "string", "name": "employmentType", "type": "string" },
-      { "internalType": "string", "name": "grade", "type": "string" },
-      { "internalType": "string", "name": "jobApplicant", "type": "string" },
-      { "internalType": "string", "name": "defaultShift", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const approvalAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getApproval",
-    "outputs": [
-      { "internalType": "string", "name": "expenseApprover", "type": "string" },
-      { "internalType": "string", "name": "leaveApprover", "type": "string" },
-      { "internalType": "string", "name": "shiftRequestApprover", "type": "string" },
-      { "internalType": "string", "name": "payrollCostCenter", "type": "string" },
-      { "internalType": "string", "name": "healthInsuranceProvider", "type": "string" },
-      { "internalType": "string", "name": "healthInsuranceNo", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const financialAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getFinancial",
-    "outputs": [
-      { "internalType": "string", "name": "salaryCurrency", "type": "string" },
-      { "internalType": "string", "name": "salaryMode", "type": "string" },
-      { "internalType": "string", "name": "bankName", "type": "string" },
-      { "internalType": "string", "name": "bankAccountNo", "type": "string" },
-      { "internalType": "string", "name": "iban", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const personalAbi = [
-  {
-    "inputs": [{ "internalType": "uint256", "name": "_employeeId", "type": "uint256" }],
-    "name": "getPersonal",
-    "outputs": [
-      { "internalType": "string", "name": "maritalStatus", "type": "string" },
-      { "internalType": "string", "name": "familyBackground", "type": "string" },
-      { "internalType": "string", "name": "bloodGroup", "type": "string" },
-      { "internalType": "string", "name": "healthDetails", "type": "string" },
-      { "internalType": "string", "name": "passportNumber", "type": "string" },
-      { "internalType": "string", "name": "validUpto", "type": "string" },
-      { "internalType": "string", "name": "dateOfIssue", "type": "string" },
-      { "internalType": "string", "name": "placeOfIssue", "type": "string" },
-      { "internalType": "string", "name": "bio", "type": "string" },
-      { "internalType": "string", "name": "attendanceDeviceId", "type": "string" },
-      { "internalType": "string", "name": "holidayList", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-// Create contract instances
-const registryContract = new web3.eth.Contract(registryAbi, registryAddress);
-const basicInfoContract = new web3.eth.Contract(basicInfoAbi, basicInfoAddress);
-const datesContract = new web3.eth.Contract(datesAbi, datesAddress);
-const contactInfoContract = new web3.eth.Contract(contactInfoAbi, contactInfoAddress);
-const basicEmploymentContract = new web3.eth.Contract(basicEmploymentAbi, basicEmploymentAddress);
-const careerContract = new web3.eth.Contract(careerAbi, careerAddress);
-const approvalContract = new web3.eth.Contract(approvalAbi, approvalAddress);
-const financialContract = new web3.eth.Contract(financialAbi, financialAddress);
-const personalContract = new web3.eth.Contract(personalAbi, personalAddress);
+// Create contract instance
+const employeeContract = new web3.eth.Contract(employeeContractAbi, employeeContractAddress);
 
 // Format date from timestamp
 function formatDate(timestamp) {
@@ -243,201 +50,18 @@ function isEmpty(str) {
   return !str || str === '' || str === '0' || str === 'Not set';
 }
 
-// Read employee basic info
-async function readBasicInfo(employeeId) {
-  try {
-    console.log(`Reading basic info from ${basicInfoAddress}...`);
-    const result = await basicInfoContract.methods.getBasicInfo(employeeId).call();
-
-    return {
-      firstName: result[0] || 'Not set',
-      middleName: result[1] || 'Not set',
-      lastName: result[2] || 'Not set',
-      fullName: result[3] || 'Not set',
-      gender: result[4] || 'Not set',
-      salutation: result[5] || 'Not set',
-      company: result[6] || 'Not set',
-      department: result[7] || 'Not set',
-      designation: result[8] || 'Not set',
-      status: result[9] || 'Not set'
-    };
-  } catch (error) {
-    console.error('Error reading basic info:', error.message);
-    return null;
-  }
-}
-
-// Read employee dates
-async function readDates(employeeId) {
-  try {
-    console.log(`Reading dates from ${datesAddress}...`);
-    const basicDates = await datesContract.methods.getBasicDates(employeeId).call();
-    const additionalDates = await datesContract.methods.getAdditionalDates(employeeId).call();
-
-    return {
-      // Basic dates
-      dateOfBirth: formatDate(basicDates[0]),
-      dateOfJoining: formatDate(basicDates[1]),
-      dateOfRetirement: formatDate(basicDates[2]),
-      creationDate: formatDate(basicDates[3]),
-      modificationDate: formatDate(basicDates[4]),
-
-      // Additional dates
-      scheduledConfirmationDate: formatDate(additionalDates[0]),
-      finalConfirmationDate: formatDate(additionalDates[1]),
-      contractEndDate: formatDate(additionalDates[2]),
-      resignationLetterDate: formatDate(additionalDates[3]),
-      relievingDate: formatDate(additionalDates[4]),
-      encashmentDate: formatDate(additionalDates[5]),
-      heldOnDate: formatDate(additionalDates[6])
-    };
-  } catch (error) {
-    console.error('Error reading dates:', error.message);
-    return null;
-  }
-}
-
-// Read employee contact info
-async function readContactInfo(employeeId) {
-  try {
-    console.log(`Reading contact info from ${contactInfoAddress}...`);
-    const result = await contactInfoContract.methods.getContactInfo(employeeId).call();
-
-    return {
-      cellNumber: result[0] || 'Not set',
-      personalEmail: result[1] || 'Not set',
-      companyEmail: result[2] || 'Not set',
-      preferredContactEmail: result[3] || 'Not set',
-      currentAddress: result[4] || 'Not set',
-      currentAccommodationType: result[5] || 'Not set',
-      permanentAddress: result[6] || 'Not set',
-      permanentAccommodationType: result[7] || 'Not set',
-      personToBeContacted: result[8] || 'Not set',
-      emergencyPhoneNumber: result[9] || 'Not set',
-      relation: result[10] || 'Not set'
-    };
-  } catch (error) {
-    console.error('Error reading contact info:', error.message);
-    return null;
-  }
-}
-
-// Read employee basic employment
-async function readBasicEmployment(employeeId) {
-  try {
-    console.log(`Reading basic employment from ${basicEmploymentAddress}...`);
-    const result = await basicEmploymentContract.methods.getBasicEmployment(employeeId).call();
-
-    return {
-      employeeNumber: result[0] || 'Not set',
-      reportsTo: result[1] || 'Not set',
-      branch: result[2] || 'Not set',
-      noticeNumberOfDays: result[3] || '0',
-      newWorkplace: result[4] || 'Not set',
-      leaveEncashed: result[5] ? 'Yes' : 'No'
-    };
-  } catch (error) {
-    console.error('Error reading basic employment:', error.message);
-    return null;
-  }
-}
-
-// Read employee career info
-async function readCareer(employeeId) {
-  try {
-    console.log(`Reading career info from ${careerAddress}...`);
-    const result = await careerContract.methods.getCareer(employeeId).call();
-
-    return {
-      reasonForLeaving: result[0] || 'Not set',
-      feedback: result[1] || 'Not set',
-      employmentType: result[2] || 'Not set',
-      grade: result[3] || 'Not set',
-      jobApplicant: result[4] || 'Not set',
-      defaultShift: result[5] || 'Not set'
-    };
-  } catch (error) {
-    console.error('Error reading career info:', error.message);
-    return null;
-  }
-}
-
-// Read employee approval info
-async function readApproval(employeeId) {
-  try {
-    console.log(`Reading approval info from ${approvalAddress}...`);
-    const result = await approvalContract.methods.getApproval(employeeId).call();
-
-    return {
-      expenseApprover: result[0] || 'Not set',
-      leaveApprover: result[1] || 'Not set',
-      shiftRequestApprover: result[2] || 'Not set',
-      payrollCostCenter: result[3] || 'Not set',
-      healthInsuranceProvider: result[4] || 'Not set',
-      healthInsuranceNo: result[5] || 'Not set'
-    };
-  } catch (error) {
-    console.error('Error reading approval info:', error.message);
-    return null;
-  }
-}
-
-// Read employee financial info
-async function readFinancial(employeeId) {
-  try {
-    console.log(`Reading financial info from ${financialAddress}...`);
-    const result = await financialContract.methods.getFinancial(employeeId).call();
-
-    return {
-      salaryCurrency: result[0] || 'Not set',
-      salaryMode: result[1] || 'Not set',
-      bankName: result[2] || 'Not set',
-      bankAccountNo: result[3] || 'Not set',
-      iban: result[4] || 'Not set'
-    };
-  } catch (error) {
-    console.error('Error reading financial info:', error.message);
-    return null;
-  }
-}
-
-// Read employee personal info
-async function readPersonal(employeeId) {
-  try {
-    console.log(`Reading personal info from ${personalAddress}...`);
-    const result = await personalContract.methods.getPersonal(employeeId).call();
-
-    return {
-      maritalStatus: result[0] || 'Not set',
-      familyBackground: result[1] || 'Not set',
-      bloodGroup: result[2] || 'Not set',
-      healthDetails: result[3] || 'Not set',
-      passportNumber: result[4] || 'Not set',
-      validUpto: result[5] || 'Not set',
-      dateOfIssue: result[6] || 'Not set',
-      placeOfIssue: result[7] || 'Not set',
-      bio: result[8] || 'Not set',
-      attendanceDeviceId: result[9] || 'Not set',
-      holidayList: result[10] || 'Not set'
-    };
-  } catch (error) {
-    console.error('Error reading personal info:', error.message);
-    return null;
-  }
-}
-
-// Get employee IDs from registry
+// Get employee IDs from the contract
 async function listEmployees() {
   try {
-    console.log(`Reading employee registry from ${registryAddress}...`);
-    const count = await registryContract.methods.getEmployeeCount().call();
+    console.log(`Reading employee registry from ${employeeContractAddress}...`);
+    const count = await employeeContract.methods.getEmployeeCount().call();
     console.log(`Found ${count} employees in registry`);
 
     const employees = [];
     for (let i = 0; i < count; i++) {
       try {
-        const id = await registryContract.methods.employeeIds(i).call();
-        const employee = await registryContract.methods.employees(id).call();
+        const id = await employeeContract.methods.employeeIds(i).call();
+        const employee = await employeeContract.methods.employees(id).call();
 
         if (employee.exists) {
           employees.push({
@@ -457,201 +81,237 @@ async function listEmployees() {
   }
 }
 
-// Read all employee data from all contracts
+// Read all employee data from the single contract
 async function readAllEmployeeData(employeeId) {
   try {
     console.log(`\n=== Reading all data for Employee ID: ${employeeId} ===\n`);
 
-    // Check if registry has the employee
-    let employeeName = 'Unknown';
-    if (registryContract) {
-      try {
-        const employee = await registryContract.methods.employees(employeeId).call();
-        if (employee.exists) {
-          employeeName = employee.name;
-          console.log(`Found employee in registry: ID ${employee.id}, Name: ${employeeName}`);
-        } else {
-          console.log(`⚠️ Warning: Employee ID ${employeeId} not found in registry`);
-        }
-      } catch (error) {
-        console.log(`⚠️ Warning: Could not check registry for employee: ${error.message}`);
+    // Get employee summary
+    let summary;
+    try {
+      summary = await employeeContract.methods.getEmployeeSummary(employeeId).call();
+      if (summary.exists) {
+        console.log(`Found employee in registry: ID ${employeeId}, Name: ${summary.name}`);
+      } else {
+        console.log(`⚠️ Warning: Employee ID ${employeeId} not found in the contract`);
+        return null;
       }
+    } catch (error) {
+      console.log(`⚠️ Warning: Could not get employee summary: ${error.message}`);
+      return null;
     }
 
-    console.log(`Reading data for employee ${employeeId} - ${employeeName}...`);
+    console.log(`Reading data for employee ${employeeId} - ${summary.name}...`);
 
-    // Read data from all contracts
-    const basicInfo = await readBasicInfo(employeeId);
-    const dates = await readDates(employeeId);
-    const contactInfo = await readContactInfo(employeeId);
-    const basicEmployment = await readBasicEmployment(employeeId);
-    const career = await readCareer(employeeId);
-    const approval = await readApproval(employeeId);
-    const financial = await readFinancial(employeeId);
-    const personal = await readPersonal(employeeId);
+    // Get all employee data from the single contract
+    const [basicInfo, basicDates, additionalDates, contactInfo, basicEmployment, career, approval, financial, personal] =
+      await Promise.all([
+        employeeContract.methods.getBasicInfo(employeeId).call(),
+        employeeContract.methods.getBasicDates(employeeId).call(),
+        employeeContract.methods.getAdditionalDates(employeeId).call(),
+        employeeContract.methods.getContactInfo(employeeId).call(),
+        employeeContract.methods.getBasicEmployment(employeeId).call(),
+        employeeContract.methods.getCareer(employeeId).call(),
+        employeeContract.methods.getApproval(employeeId).call(),
+        employeeContract.methods.getFinancial(employeeId).call(),
+        employeeContract.methods.getPersonal(employeeId).call()
+      ]);
+
+    // Format the data for display and storage
+    const formattedData = {
+      employeeId: employeeId,
+      name: summary.name,
+      status: summary.status,
+      basicInfo: {
+        firstName: basicInfo[0] || 'Not set',
+        middleName: basicInfo[1] || 'Not set',
+        lastName: basicInfo[2] || 'Not set',
+        fullName: basicInfo[3] || 'Not set',
+        gender: basicInfo[4] || 'Not set',
+        salutation: basicInfo[5] || 'Not set',
+        company: basicInfo[6] || 'Not set',
+        department: basicInfo[7] || 'Not set',
+        designation: basicInfo[8] || 'Not set',
+        status: basicInfo[9] || 'Not set'
+      },
+      dates: {
+        dateOfBirth: formatDate(basicDates[0]),
+        dateOfJoining: formatDate(basicDates[1]),
+        dateOfRetirement: formatDate(basicDates[2]),
+        creationDate: formatDate(basicDates[3]),
+        modificationDate: formatDate(basicDates[4]),
+        scheduledConfirmationDate: formatDate(additionalDates[0]),
+        finalConfirmationDate: formatDate(additionalDates[1]),
+        contractEndDate: formatDate(additionalDates[2]),
+        resignationLetterDate: formatDate(additionalDates[3]),
+        relievingDate: formatDate(additionalDates[4]),
+        encashmentDate: formatDate(additionalDates[5]),
+        heldOnDate: formatDate(additionalDates[6])
+      },
+      contactInfo: {
+        cellNumber: contactInfo[0] || 'Not set',
+        personalEmail: contactInfo[1] || 'Not set',
+        companyEmail: contactInfo[2] || 'Not set',
+        preferredContactEmail: contactInfo[3] || 'Not set',
+        currentAddress: contactInfo[4] || 'Not set',
+        currentAccommodationType: contactInfo[5] || 'Not set',
+        permanentAddress: contactInfo[6] || 'Not set',
+        permanentAccommodationType: contactInfo[7] || 'Not set',
+        personToBeContacted: contactInfo[8] || 'Not set',
+        emergencyPhoneNumber: contactInfo[9] || 'Not set',
+        relation: contactInfo[10] || 'Not set'
+      },
+      employment: {
+        employeeNumber: basicEmployment[0] || 'Not set',
+        reportsTo: basicEmployment[1] || 'Not set',
+        branch: basicEmployment[2] || 'Not set',
+        noticeNumberOfDays: basicEmployment[3] || '0',
+        newWorkplace: basicEmployment[4] || 'Not set',
+        leaveEncashed: basicEmployment[5] ? 'Yes' : 'No'
+      },
+      career: {
+        reasonForLeaving: career[0] || 'Not set',
+        feedback: career[1] || 'Not set',
+        employmentType: career[2] || 'Not set',
+        grade: career[3] || 'Not set',
+        jobApplicant: career[4] || 'Not set',
+        defaultShift: career[5] || 'Not set'
+      },
+      approval: {
+        expenseApprover: approval[0] || 'Not set',
+        leaveApprover: approval[1] || 'Not set',
+        shiftRequestApprover: approval[2] || 'Not set',
+        payrollCostCenter: approval[3] || 'Not set',
+        healthInsuranceProvider: approval[4] || 'Not set',
+        healthInsuranceNo: approval[5] || 'Not set'
+      },
+      financial: {
+        salaryCurrency: financial[0] || 'Not set',
+        salaryMode: financial[1] || 'Not set',
+        bankName: financial[2] || 'Not set',
+        bankAccountNo: financial[3] || 'Not set',
+        iban: financial[4] || 'Not set'
+      },
+      personal: {
+        maritalStatus: personal[0] || 'Not set',
+        familyBackground: personal[1] || 'Not set',
+        bloodGroup: personal[2] || 'Not set',
+        healthDetails: personal[3] || 'Not set',
+        passportNumber: personal[4] || 'Not set',
+        validUpto: personal[5] || 'Not set',
+        dateOfIssue: personal[6] || 'Not set',
+        placeOfIssue: personal[7] || 'Not set',
+        bio: personal[8] || 'Not set',
+        attendanceDeviceId: personal[9] || 'Not set',
+        holidayList: personal[10] || 'Not set'
+      }
+    };
 
     // Format and display results
     console.log('\n=== 1. BASIC INFORMATION ===');
-    if (basicInfo) {
-      console.log(`Full Name: ${basicInfo.fullName}`);
-      console.log(`First Name: ${basicInfo.firstName}`);
-      console.log(`Middle Name: ${basicInfo.middleName}`);
-      console.log(`Last Name: ${basicInfo.lastName}`);
-      console.log(`Gender: ${basicInfo.gender}`);
-      console.log(`Salutation: ${basicInfo.salutation}`);
-      console.log(`Company: ${basicInfo.company}`);
-      console.log(`Department: ${basicInfo.department}`);
-      console.log(`Designation: ${basicInfo.designation}`);
-      console.log(`Status: ${basicInfo.status}`);
-    } else {
-      console.log('No basic information available');
-    }
+    console.log(`Full Name: ${formattedData.basicInfo.fullName}`);
+    console.log(`First Name: ${formattedData.basicInfo.firstName}`);
+    console.log(`Middle Name: ${formattedData.basicInfo.middleName}`);
+    console.log(`Last Name: ${formattedData.basicInfo.lastName}`);
+    console.log(`Gender: ${formattedData.basicInfo.gender}`);
+    console.log(`Salutation: ${formattedData.basicInfo.salutation}`);
+    console.log(`Company: ${formattedData.basicInfo.company}`);
+    console.log(`Department: ${formattedData.basicInfo.department}`);
+    console.log(`Designation: ${formattedData.basicInfo.designation}`);
+    console.log(`Status: ${formattedData.basicInfo.status}`);
 
     console.log('\n=== 2. DATES ===');
-    if (dates) {
-      console.log(`Date of Birth: ${dates.dateOfBirth}`);
-      console.log(`Date of Joining: ${dates.dateOfJoining}`);
-      console.log(`Date of Retirement: ${dates.dateOfRetirement}`);
-      console.log(`Creation Date: ${dates.creationDate}`);
-      console.log(`Last Modified: ${dates.modificationDate}`);
+    console.log(`Date of Birth: ${formattedData.dates.dateOfBirth}`);
+    console.log(`Date of Joining: ${formattedData.dates.dateOfJoining}`);
+    console.log(`Date of Retirement: ${formattedData.dates.dateOfRetirement}`);
+    console.log(`Creation Date: ${formattedData.dates.creationDate}`);
+    console.log(`Last Modified: ${formattedData.dates.modificationDate}`);
 
-      if (!isEmpty(dates.scheduledConfirmationDate) ||
-        !isEmpty(dates.finalConfirmationDate) ||
-        !isEmpty(dates.contractEndDate)) {
-        console.log('\nAdditional Dates:');
-        console.log(`Scheduled Confirmation: ${dates.scheduledConfirmationDate}`);
-        console.log(`Final Confirmation: ${dates.finalConfirmationDate}`);
-        console.log(`Contract End: ${dates.contractEndDate}`);
-        console.log(`Resignation Letter: ${dates.resignationLetterDate}`);
-        console.log(`Relieving Date: ${dates.relievingDate}`);
-        console.log(`Encashment Date: ${dates.encashmentDate}`);
-        console.log(`Held On Date: ${dates.heldOnDate}`);
-      }
-    } else {
-      console.log('No date information available');
+    if (!isEmpty(formattedData.dates.scheduledConfirmationDate) ||
+      !isEmpty(formattedData.dates.finalConfirmationDate) ||
+      !isEmpty(formattedData.dates.contractEndDate)) {
+      console.log('\nAdditional Dates:');
+      console.log(`Scheduled Confirmation: ${formattedData.dates.scheduledConfirmationDate}`);
+      console.log(`Final Confirmation: ${formattedData.dates.finalConfirmationDate}`);
+      console.log(`Contract End: ${formattedData.dates.contractEndDate}`);
+      console.log(`Resignation Letter: ${formattedData.dates.resignationLetterDate}`);
+      console.log(`Relieving Date: ${formattedData.dates.relievingDate}`);
+      console.log(`Encashment Date: ${formattedData.dates.encashmentDate}`);
+      console.log(`Held On Date: ${formattedData.dates.heldOnDate}`);
     }
 
     console.log('\n=== 3. CONTACT INFORMATION ===');
-    if (contactInfo) {
-      console.log(`Cell Number: ${contactInfo.cellNumber}`);
-      console.log(`Personal Email: ${contactInfo.personalEmail}`);
-      console.log(`Company Email: ${contactInfo.companyEmail}`);
-      console.log(`Preferred Email: ${contactInfo.preferredContactEmail}`);
+    console.log(`Cell Number: ${formattedData.contactInfo.cellNumber}`);
+    console.log(`Personal Email: ${formattedData.contactInfo.personalEmail}`);
+    console.log(`Company Email: ${formattedData.contactInfo.companyEmail}`);
+    console.log(`Preferred Email: ${formattedData.contactInfo.preferredContactEmail}`);
 
-      if (!isEmpty(contactInfo.currentAddress) ||
-        !isEmpty(contactInfo.permanentAddress)) {
-        console.log('\nAddresses:');
-        console.log(`Current Address: ${contactInfo.currentAddress}`);
-        console.log(`Current Accommodation: ${contactInfo.currentAccommodationType}`);
-        console.log(`Permanent Address: ${contactInfo.permanentAddress}`);
-        console.log(`Permanent Accommodation: ${contactInfo.permanentAccommodationType}`);
-      }
+    if (!isEmpty(formattedData.contactInfo.currentAddress) ||
+      !isEmpty(formattedData.contactInfo.permanentAddress)) {
+      console.log('\nAddresses:');
+      console.log(`Current Address: ${formattedData.contactInfo.currentAddress}`);
+      console.log(`Current Accommodation: ${formattedData.contactInfo.currentAccommodationType}`);
+      console.log(`Permanent Address: ${formattedData.contactInfo.permanentAddress}`);
+      console.log(`Permanent Accommodation: ${formattedData.contactInfo.permanentAccommodationType}`);
+    }
 
-      if (!isEmpty(contactInfo.personToBeContacted) ||
-        !isEmpty(contactInfo.emergencyPhoneNumber)) {
-        console.log('\nEmergency Contact:');
-        console.log(`Contact Person: ${contactInfo.personToBeContacted}`);
-        console.log(`Emergency Phone: ${contactInfo.emergencyPhoneNumber}`);
-        console.log(`Relation: ${contactInfo.relation}`);
-      }
-    } else {
-      console.log('No contact information available');
+    if (!isEmpty(formattedData.contactInfo.personToBeContacted) ||
+      !isEmpty(formattedData.contactInfo.emergencyPhoneNumber)) {
+      console.log('\nEmergency Contact:');
+      console.log(`Contact Person: ${formattedData.contactInfo.personToBeContacted}`);
+      console.log(`Emergency Phone: ${formattedData.contactInfo.emergencyPhoneNumber}`);
+      console.log(`Relation: ${formattedData.contactInfo.relation}`);
     }
 
     console.log('\n=== 4. EMPLOYMENT DETAILS ===');
-    if (basicEmployment) {
-      console.log(`Employee Number: ${basicEmployment.employeeNumber}`);
-      console.log(`Reports To: ${basicEmployment.reportsTo}`);
-      console.log(`Branch: ${basicEmployment.branch}`);
-      console.log(`Notice Period (days): ${basicEmployment.noticeNumberOfDays}`);
-      console.log(`New Workplace: ${basicEmployment.newWorkplace}`);
-      console.log(`Leave Encashed: ${basicEmployment.leaveEncashed}`);
-    } else {
-      console.log('No employment details available');
-    }
+    console.log(`Employee Number: ${formattedData.employment.employeeNumber}`);
+    console.log(`Reports To: ${formattedData.employment.reportsTo}`);
+    console.log(`Branch: ${formattedData.employment.branch}`);
+    console.log(`Notice Period (days): ${formattedData.employment.noticeNumberOfDays}`);
+    console.log(`New Workplace: ${formattedData.employment.newWorkplace}`);
+    console.log(`Leave Encashed: ${formattedData.employment.leaveEncashed}`);
 
     console.log('\n=== 5. CAREER INFORMATION ===');
-    if (career) {
-      console.log(`Employment Type: ${career.employmentType}`);
-      console.log(`Grade: ${career.grade}`);
-      console.log(`Job Applicant: ${career.jobApplicant}`);
-      console.log(`Default Shift: ${career.defaultShift}`);
-      console.log(`Reason for Leaving: ${career.reasonForLeaving}`);
-      console.log(`Feedback: ${career.feedback}`);
-    } else {
-      console.log('No career information available');
-    }
+    console.log(`Employment Type: ${formattedData.career.employmentType}`);
+    console.log(`Grade: ${formattedData.career.grade}`);
+    console.log(`Job Applicant: ${formattedData.career.jobApplicant}`);
+    console.log(`Default Shift: ${formattedData.career.defaultShift}`);
+    console.log(`Reason for Leaving: ${formattedData.career.reasonForLeaving}`);
+    console.log(`Feedback: ${formattedData.career.feedback}`);
 
     console.log('\n=== 6. APPROVAL INFORMATION ===');
-    if (approval) {
-      console.log(`Expense Approver: ${approval.expenseApprover}`);
-      console.log(`Leave Approver: ${approval.leaveApprover}`);
-      console.log(`Shift Request Approver: ${approval.shiftRequestApprover}`);
-      console.log(`Payroll Cost Center: ${approval.payrollCostCenter}`);
-      console.log(`Health Insurance Provider: ${approval.healthInsuranceProvider}`);
-      console.log(`Health Insurance Number: ${approval.healthInsuranceNo}`);
-    } else {
-      console.log('No approval information available');
-    }
+    console.log(`Expense Approver: ${formattedData.approval.expenseApprover}`);
+    console.log(`Leave Approver: ${formattedData.approval.leaveApprover}`);
+    console.log(`Shift Request Approver: ${formattedData.approval.shiftRequestApprover}`);
+    console.log(`Payroll Cost Center: ${formattedData.approval.payrollCostCenter}`);
+    console.log(`Health Insurance Provider: ${formattedData.approval.healthInsuranceProvider}`);
+    console.log(`Health Insurance Number: ${formattedData.approval.healthInsuranceNo}`);
 
     console.log('\n=== 7. FINANCIAL INFORMATION ===');
-    if (financial) {
-      console.log(`Salary Currency: ${financial.salaryCurrency}`);
-      console.log(`Salary Mode: ${financial.salaryMode}`);
-      console.log(`Bank Name: ${financial.bankName}`);
-      console.log(`Bank Account Number: ${financial.bankAccountNo}`);
-      console.log(`IBAN: ${financial.iban}`);
-    } else {
-      console.log('No financial information available');
-    }
+    console.log(`Salary Currency: ${formattedData.financial.salaryCurrency}`);
+    console.log(`Salary Mode: ${formattedData.financial.salaryMode}`);
+    console.log(`Bank Name: ${formattedData.financial.bankName}`);
+    console.log(`Bank Account Number: ${formattedData.financial.bankAccountNo}`);
+    console.log(`IBAN: ${formattedData.financial.iban}`);
 
     console.log('\n=== 8. PERSONAL INFORMATION ===');
-    if (personal) {
-      console.log(`Marital Status: ${personal.maritalStatus}`);
-      console.log(`Family Background: ${personal.familyBackground}`);
-      console.log(`Blood Group: ${personal.bloodGroup}`);
-      console.log(`Health Details: ${personal.healthDetails}`);
+    console.log(`Marital Status: ${formattedData.personal.maritalStatus}`);
+    console.log(`Family Background: ${formattedData.personal.familyBackground}`);
+    console.log(`Blood Group: ${formattedData.personal.bloodGroup}`);
+    console.log(`Health Details: ${formattedData.personal.healthDetails}`);
 
-      if (!isEmpty(personal.passportNumber)) {
-        console.log('\nPassport Details:');
-        console.log(`Passport Number: ${personal.passportNumber}`);
-        console.log(`Valid Until: ${personal.validUpto}`);
-        console.log(`Date of Issue: ${personal.dateOfIssue}`);
-        console.log(`Place of Issue: ${personal.placeOfIssue}`);
-      }
-
-      console.log('\nOther Details:');
-      console.log(`Bio: ${personal.bio}`);
-      console.log(`Attendance Device ID: ${personal.attendanceDeviceId}`);
-      console.log(`Holiday List: ${personal.holidayList}`);
-    } else {
-      console.log('No personal information available');
+    if (!isEmpty(formattedData.personal.passportNumber)) {
+      console.log('\nPassport Details:');
+      console.log(`Passport Number: ${formattedData.personal.passportNumber}`);
+      console.log(`Valid Until: ${formattedData.personal.validUpto}`);
+      console.log(`Date of Issue: ${formattedData.personal.dateOfIssue}`);
+      console.log(`Place of Issue: ${formattedData.personal.placeOfIssue}`);
     }
 
-    console.log('\n=== EMPLOYEE DATA SUMMARY ===');
-    console.log(`Basic Info: ${basicInfo ? '✓' : '✗'}`);
-    console.log(`Basic Info: ${basicInfo ? '✓' : '✗'}`);
-    console.log(`Dates: ${dates ? '✓' : '✗'}`);
-    console.log(`Contact: ${contactInfo ? '✓' : '✗'}`);
-    console.log(`Employment: ${basicEmployment ? '✓' : '✗'}`);
-    console.log(`Career: ${career ? '✓' : '✗'}`);
-    console.log(`Approval: ${approval ? '✓' : '✗'}`);
-    console.log(`Financial: ${financial ? '✓' : '✗'}`);
-    console.log(`Personal: ${personal ? '✓' : '✗'}`);
-
-    // Generate JSON output file
-    const outputData = {
-      employeeId: employeeId,
-      name: employeeName,
-      basicInfo,
-      dates,
-      contactInfo,
-      basicEmployment,
-      career,
-      approval,
-      financial,
-      personal
-    };
+    console.log('\nOther Details:');
+    console.log(`Bio: ${formattedData.personal.bio}`);
+    console.log(`Attendance Device ID: ${formattedData.personal.attendanceDeviceId}`);
+    console.log(`Holiday List: ${formattedData.personal.holidayList}`);
 
     // Save to file
     const outputDir = path.join(__dirname, 'output');
@@ -660,10 +320,10 @@ async function readAllEmployeeData(employeeId) {
     }
 
     const outputFile = path.join(outputDir, `employee_${employeeId}.json`);
-    fs.writeFileSync(outputFile, JSON.stringify(outputData, null, 2));
+    fs.writeFileSync(outputFile, JSON.stringify(formattedData, null, 2));
     console.log(`\nData saved to ${outputFile}`);
 
-    return outputData;
+    return formattedData;
   } catch (error) {
     console.error('Error reading all employee data:', error);
     return null;
@@ -684,36 +344,28 @@ async function main() {
       console.log('Will attempt to continue anyway...');
     }
 
-    // Display contract addresses
-    console.log('\nContract Addresses:');
-    console.log(`Registry: ${registryAddress}`);
-    console.log(`Basic Info: ${basicInfoAddress}`);
-    console.log(`Dates: ${datesAddress}`);
-    console.log(`Contact Info: ${contactInfoAddress}`);
-    console.log(`Basic Employment: ${basicEmploymentAddress}`);
-    console.log(`Career: ${careerAddress}`);
-    console.log(`Approval: ${approvalAddress}`);
-    console.log(`Financial: ${financialAddress}`);
-    console.log(`Personal: ${personalAddress}`);
+    // Display contract address
+    console.log('\nContract Address:');
+    console.log(`Employee Contract: ${employeeContractAddress}`);
 
-    // List employees from registry
-    console.log('\nListing employees from registry:');
+    // List employees from the contract
+    console.log('\nListing employees from the contract:');
     let employees = [];
     try {
       employees = await listEmployees();
     } catch (error) {
-      console.error('Error listing employees from registry:', error.message);
+      console.error('Error listing employees from the contract:', error.message);
     }
 
     if (employees.length === 0) {
-      console.log('No employees found in registry or registry not accessible.');
+      console.log('No employees found in the contract or contract not accessible.');
       console.log('Using default employee ID: 1');
 
       // Read data for employee ID 1
-      await readAllEmployeeData(3);
+      await readAllEmployeeData(1);
     } else {
       // Display employees
-      console.log('Employees in registry:');
+      console.log('Employees in contract:');
       employees.forEach(employee => {
         console.log(`ID: ${employee.id}, Name: ${employee.name}`);
       });

@@ -1,24 +1,24 @@
 {
-  "employeeId": "3",
-  "name": "danar",
+  "employeeId": "4",
+  "name": "Bima SR",
   "status": "Active",
   "basicInfo": {
-    "firstName": "danarIT",
-    "middleName": "testing",
-    "lastName": "terakhir",
-    "fullName": "danarIT testing terakhir",
-    "gender": "Female",
-    "salutation": "Not set",
+    "firstName": "Bima",
+    "middleName": "SR",
+    "lastName": "Not set",
+    "fullName": "Bima SR",
+    "gender": "Male",
+    "salutation": "Master",
     "company": "Fiyansa",
-    "department": "Not set",
-    "designation": "Not set",
+    "department": "Accounts",
+    "designation": "Accountant",
     "status": "Active"
   },
   "dates": {
     "dateOfBirth": "01/01/1970",
     "dateOfJoining": "01/01/1970",
     "dateOfRetirement": "01/01/1970",
-    "creationDate": "06/05/2025",
+    "creationDate": "07/05/2025",
     "modificationDate": "07/05/2025",
     "scheduledConfirmationDate": "Not set",
     "finalConfirmationDate": "Not set",
@@ -43,7 +43,7 @@
   },
   "employment": {
     "employeeNumber": "Not set",
-    "reportsTo": "Not set",
+    "reportsTo": "HR-EMP-00001",
     "branch": "Not set",
     "noticeNumberOfDays": "0",
     "newWorkplace": "Not set",
@@ -52,7 +52,7 @@
   "career": {
     "reasonForLeaving": "Not set",
     "feedback": "Not set",
-    "employmentType": "Not set",
+    "employmentType": "Commission",
     "grade": "Not set",
     "jobApplicant": "Not set",
     "defaultShift": "Not set"
