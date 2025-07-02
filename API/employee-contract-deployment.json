@@ -1,0 +1,13 @@
+{
+  "contractAddress": "0xda6fe8695E3fEAaF612092cC485142F399A9FbCd",
+  "transactionHash": "0x701c558e22539243084edaa8594f710388df999621ab0c16d46cce227c7d99b4",
+  "blockNumber": 67522,
+  "gasUsed": 1040068,
+  "gasLimit": 1540068,
+  "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
+  "deploymentTime": "2025-06-26T09:20:31.325Z",
+  "network": {
+    "url": "http://localhost:8545",
+    "chainId": 1337
+  }
+}

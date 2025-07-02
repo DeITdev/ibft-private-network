@@ -2,23 +2,25 @@
 pragma solidity ^0.8.0;
 
 contract EmployeeStorage {
-    // Employee data structure - simplified to reduce gas
+    // Employee data structure
     struct Employee {
         string recordId;          // HR-EMP-00101
-        uint256 createdTimestamp; // Unix timestamp
-        uint256 modifiedTimestamp; // Unix timestamp
-        string modifiedBy;        // Email address
-        string allData;           // JSON string of all data
-        bool exists;              // Track existence
+        uint256 createdTimestamp; // 2025-06-25T14:03:23.015Z converted to timestamp
+        uint256 modifiedTimestamp; // 2025-06-26T09:41:45.823Z converted to timestamp
+        string modifiedBy;        // danarikramtirta@gmail.com
+        string allData;           // Complete JSON string of all employee data
     }
     
     // Mapping from employee record ID to employee data
-    mapping(string => Employee) private employees;
+    mapping(string => Employee) public employees;
     
     // Array to store all employee record IDs for enumeration
-    string[] private employeeIds;
+    string[] public employeeIds;
     
-    // Events for logging
+    // Mapping to check if employee exists
+    mapping(string => bool) public employeeExists;
+    
+    // Events
     event EmployeeStored(string indexed recordId, uint256 createdTimestamp, uint256 modifiedTimestamp);
     event EmployeeUpdated(string indexed recordId, uint256 modifiedTimestamp);
     
@@ -30,14 +32,8 @@ contract EmployeeStorage {
         string memory _modifiedBy,
         string memory _allData
     ) public returns (bool) {
-        // Input validation
-        require(bytes(_recordId).length > 0, "Record ID cannot be empty");
-        require(bytes(_modifiedBy).length > 0, "Modified by cannot be empty");
-        require(_createdTimestamp > 0, "Created timestamp must be positive");
-        require(_modifiedTimestamp > 0, "Modified timestamp must be positive");
-        
         // Check if this is a new employee
-        bool isNewEmployee = !employees[_recordId].exists;
+        bool isNewEmployee = !employeeExists[_recordId];
         
         // Store employee data
         employees[_recordId] = Employee({
@@ -45,13 +41,13 @@ contract EmployeeStorage {
             createdTimestamp: _createdTimestamp,
             modifiedTimestamp: _modifiedTimestamp,
             modifiedBy: _modifiedBy,
-            allData: _allData,
-            exists: true
+            allData: _allData
         });
         
-        // If new employee, add to array
+        // If new employee, add to array and mark as existing
         if (isNewEmployee) {
             employeeIds.push(_recordId);
+            employeeExists[_recordId] = true;
             emit EmployeeStored(_recordId, _createdTimestamp, _modifiedTimestamp);
         } else {
             emit EmployeeUpdated(_recordId, _modifiedTimestamp);
@@ -68,7 +64,7 @@ contract EmployeeStorage {
         string memory modifiedBy,
         string memory allData
     ) {
-        require(employees[_recordId].exists, "Employee does not exist");
+        require(employeeExists[_recordId], "Employee does not exist");
         
         Employee memory emp = employees[_recordId];
         return (
@@ -91,42 +87,24 @@ contract EmployeeStorage {
         return employeeIds[_index];
     }
     
-    // Get all employee IDs (limited to prevent gas issues)
+    // Get all employee IDs
     function getAllEmployeeIds() public view returns (string[] memory) {
-        require(employeeIds.length <= 100, "Too many employees, use pagination");
         return employeeIds;
-    }
-    
-    // Get employee IDs with pagination
-    function getEmployeeIdsPaginated(uint256 _start, uint256 _limit) public view returns (string[] memory) {
-        require(_start < employeeIds.length, "Start index out of bounds");
-        
-        uint256 end = _start + _limit;
-        if (end > employeeIds.length) {
-            end = employeeIds.length;
-        }
-        
-        string[] memory result = new string[](end - _start);
-        for (uint256 i = _start; i < end; i++) {
-            result[i - _start] = employeeIds[i];
-        }
-        
-        return result;
     }
     
     // Check if employee exists
     function doesEmployeeExist(string memory _recordId) public view returns (bool) {
-        return employees[_recordId].exists;
+        return employeeExists[_recordId];
     }
     
-    // Get employee metadata only (without full data to save gas)
+    // Get employee metadata only (without full data)
     function getEmployeeMetadata(string memory _recordId) public view returns (
         string memory recordId,
         uint256 createdTimestamp,
         uint256 modifiedTimestamp,
         string memory modifiedBy
     ) {
-        require(employees[_recordId].exists, "Employee does not exist");
+        require(employeeExists[_recordId], "Employee does not exist");
         
         Employee memory emp = employees[_recordId];
         return (
@@ -135,25 +113,5 @@ contract EmployeeStorage {
             emp.modifiedTimestamp,
             emp.modifiedBy
         );
-    }
-    
-    // Remove employee (for cleanup if needed)
-    function removeEmployee(string memory _recordId) public returns (bool) {
-        require(employees[_recordId].exists, "Employee does not exist");
-        
-        // Mark as non-existent
-        employees[_recordId].exists = false;
-        
-        // Remove from array (expensive operation, use carefully)
-        for (uint256 i = 0; i < employeeIds.length; i++) {
-            if (keccak256(bytes(employeeIds[i])) == keccak256(bytes(_recordId))) {
-                // Move last element to this position and pop
-                employeeIds[i] = employeeIds[employeeIds.length - 1];
-                employeeIds.pop();
-                break;
-            }
-        }
-        
-        return true;
     }
 }
