@@ -20,6 +20,11 @@
       "name": "Node4",
       "client": "besu",
       "rpcUrl": "http://172.16.239.14:8548"
+    },
+    {
+      "name": "Node5",
+      "client": "besu",
+      "rpcUrl": "http://172.16.239.17:8549"
     }
   ],
   "accounts": [
