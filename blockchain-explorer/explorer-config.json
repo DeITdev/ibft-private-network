@@ -1,0 +1,30 @@
+{
+  "Algorithm": "ibft",
+  "nodes": [
+    {
+      "name": "Node1 (Boot)",
+      "client": "besu",
+      "rpcUrl": "http://172.16.239.11:8545"
+    },
+    {
+      "name": "Node2",
+      "client": "besu",
+      "rpcUrl": "http://172.16.239.12:8546"
+    },
+    {
+      "name": "Node3",
+      "client": "besu",
+      "rpcUrl": "http://172.16.239.13:8547"
+    },
+    {
+      "name": "Node4",
+      "client": "besu",
+      "rpcUrl": "http://172.16.239.14:8548"
+    },
+    {
+      "name": "Node5",
+      "client": "besu",
+      "rpcUrl": "http://172.16.239.17:8549"
+    }
+  ]
+}

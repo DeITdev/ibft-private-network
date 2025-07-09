@@ -198,38 +198,6 @@ services:
       retries: 5
       start_period: 30s
 
-  # Quorum Explorer
-  quorum-explorer:
-    container_name: quorum-explorer
-    image: consensys/quorum-explorer:latest
-    depends_on:
-      node-1:
-        condition: service_healthy
-      node-2:
-        condition: service_healthy
-      node-3:
-        condition: service_healthy
-      node-4:
-        condition: service_healthy
-      node-5:
-        condition: service_healthy
-    ports:
-      - "25000:25000"
-    networks:
-      besu-network:
-        ipv4_address: 172.16.239.15
-    environment:
-      - QE_BASEPATH=/explorer
-      - QE_CONFIG_PATH=/app/config.json
-      - NODE_ENV=production
-      - DISABLE_AUTH=true
-      - NEXTAUTH_URL=http://localhost:25000
-      - NEXTAUTH_URL_INTERNAL=http://localhost:25000
-      - NEXTAUTH_SECRET=bb5c5f6691e81529db5ec1c8ab9e06c7bbb92551e3e26e5d4b2644148de92909
-    volumes:
-      - ./explorer-config.json:/app/config.json
-    restart: unless-stopped
-
 networks:
   besu-network:
     driver: bridge
