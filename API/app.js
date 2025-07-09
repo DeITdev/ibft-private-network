@@ -1,4 +1,10 @@
 // app.js - Employee Blockchain API Server
+
+// Add this line at the very top
+if (!globalThis.fetch) {
+  globalThis.fetch = require('node-fetch');
+}
+
 require('dotenv').config();
 const express = require('express');
 const app = express();
@@ -24,11 +30,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Environment configuration
-const PORT = process.env.API_BLOCKCHAIN_ENDPOINT?.split(':')[2] || 4001;
+// Environment configuration with better port handling
+const HOST = process.env.HOST || '0.0.0.0'; // Listen on all interfaces
+const PORT = process.env.PORT ||
+  process.env.API_BLOCKCHAIN_ENDPOINT?.split(':')[2] ||
+  4001;
 const BLOCKCHAIN_URL = process.env.BLOCKCHAIN_URL || 'http://192.168.68.128:8545';
 const BLOCKCHAIN_CHAIN_ID = parseInt(process.env.BLOCKCHAIN_CHAIN_ID || '1337');
 const PRIVATE_KEY = process.env.PRIVATE_KEY || '8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS; // Read from environment
 
 // Initialize web3
 let web3;
@@ -51,14 +61,20 @@ try {
     employeeContract = require(employeeContractPath);
     console.log('✅ Employee contract ABI loaded successfully');
 
-    // Try to load deployment info
-    const deploymentPath = path.resolve(__dirname, 'employee-contract-deployment.json');
-    if (fs.existsSync(deploymentPath)) {
-      const deploymentInfo = require(deploymentPath);
-      employeeContractAddress = deploymentInfo.contractAddress;
-      console.log('✅ Employee contract address loaded:', employeeContractAddress);
+    // First check environment variable for contract address
+    if (CONTRACT_ADDRESS) {
+      employeeContractAddress = CONTRACT_ADDRESS;
+      console.log('✅ Employee contract address loaded from ENV:', employeeContractAddress);
     } else {
-      console.log('⚠️  No deployment info found. You need to deploy the contract first.');
+      // Fallback to deployment file
+      const deploymentPath = path.resolve(__dirname, 'employee-contract-deployment.json');
+      if (fs.existsSync(deploymentPath)) {
+        const deploymentInfo = require(deploymentPath);
+        employeeContractAddress = deploymentInfo.contractAddress;
+        console.log('✅ Employee contract address loaded from file:', employeeContractAddress);
+      } else {
+        console.log('⚠️  No deployment info found. You need to deploy the contract first or set CONTRACT_ADDRESS env var.');
+      }
     }
   } else {
     console.log('⚠️  Employee contract not compiled. Run: node compile-employee-contract.js');
@@ -166,7 +182,9 @@ app.get('/', (req, res) => {
     status: 'running',
     contractAddress: employeeContractAddress,
     blockchain: BLOCKCHAIN_URL,
-    chainId: BLOCKCHAIN_CHAIN_ID
+    chainId: BLOCKCHAIN_CHAIN_ID,
+    port: PORT,
+    host: HOST
   });
 });
 
@@ -400,7 +418,11 @@ app.get('/contract/info', (req, res) => {
     blockchain: BLOCKCHAIN_URL,
     chainId: BLOCKCHAIN_CHAIN_ID,
     contractLoaded: !!employeeContract,
-    contractDeployed: !!employeeContractAddress
+    contractDeployed: !!employeeContractAddress,
+    server: {
+      host: HOST,
+      port: PORT
+    }
   });
 });
 
@@ -413,10 +435,31 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Process terminated');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Process terminated');
+    process.exit(0);
+  });
+});
+
+// Start server with proper host binding
+const server = app.listen(PORT, HOST, () => {
+  const address = server.address();
   console.log('🚀 Employee Blockchain API Server started');
-  console.log('🌐 Server running on port:', PORT);
+  console.log('🌐 Server running on:');
+  console.log(`   Host: ${address.address}`);
+  console.log(`   Port: ${address.port}`);
+  console.log(`   URL: http://${address.address === '::' ? 'localhost' : address.address}:${address.port}`);
   console.log('🔗 Blockchain URL:', BLOCKCHAIN_URL);
   console.log('🔢 Chain ID:', BLOCKCHAIN_CHAIN_ID);
   console.log('📝 Contract Address:', employeeContractAddress || 'Not deployed');
@@ -428,4 +471,15 @@ app.listen(PORT, () => {
   console.log('  GET  /employees/:recordId/metadata', '- Get employee metadata');
   console.log('  GET  /contract/info', '- Contract information');
   console.log('\n⚡ Ready to handle CDC events!');
+
+  // Additional network interface information
+  const networkInterfaces = require('os').networkInterfaces();
+  console.log('\n🌐 Available network interfaces:');
+  Object.keys(networkInterfaces).forEach(interfaceName => {
+    networkInterfaces[interfaceName].forEach(interface => {
+      if (interface.family === 'IPv4' && !interface.internal) {
+        console.log(`   ${interfaceName}: http://${interface.address}:${address.port}`);
+      }
+    });
+  });
 });
