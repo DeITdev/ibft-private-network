@@ -171,7 +171,7 @@ services:
       - "8549:8549"
     networks:
       besu-network:
-        ipv4_address: 172.16.239.17
+        ipv4_address: 172.16.239.15
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
@@ -184,7 +184,7 @@ services:
       --rpc-http-port=8549
       --profile=ENTERPRISE
       --rpc-http-host=0.0.0.0
-      --p2p-host=172.16.239.17
+      --p2p-host=172.16.239.15
       --network-id=1337
       --min-gas-price=0
       --target-gas-limit=1000000000
