@@ -2,7 +2,7 @@ services:
   # Bootstrap/Bootnode (Node-1)
   node-1:
     container_name: node-1
-    image: hyperledger/besu:24.10.0
+    image: hyperledger/besu:25.7.0
     volumes:
       - ../genesis.json:/opt/besu/genesis.json
       - ../Node-1/data:/opt/besu/data
@@ -38,7 +38,7 @@ services:
   # Node-2
   node-2:
     container_name: node-2
-    image: hyperledger/besu:24.10.0
+    image: hyperledger/besu:25.7.0
     depends_on:
       node-1:
         condition: service_healthy
@@ -53,7 +53,7 @@ services:
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
+      --bootnodes=enode://f52ef1198b0b9533a7ffc8e83164a263e52030c5dca4176e963c91d3c7737ffcd027ee6b7e8b040f520737f470add09301a013606dca404db7fe2c4d0c4b7da3@172.16.239.11:30303
       --p2p-port=30304
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
@@ -79,7 +79,7 @@ services:
   # Node-3
   node-3:
     container_name: node-3
-    image: hyperledger/besu:24.10.0
+    image: hyperledger/besu:25.7.0
     depends_on:
       node-1:
         condition: service_healthy
@@ -94,7 +94,7 @@ services:
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
+      --bootnodes=enode://f52ef1198b0b9533a7ffc8e83164a263e52030c5dca4176e963c91d3c7737ffcd027ee6b7e8b040f520737f470add09301a013606dca404db7fe2c4d0c4b7da3@172.16.239.11:30303
       --p2p-port=30305
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
@@ -120,7 +120,7 @@ services:
   # Node-4
   node-4:
     container_name: node-4
-    image: hyperledger/besu:24.10.0
+    image: hyperledger/besu:25.7.0
     depends_on:
       node-1:
         condition: service_healthy
@@ -135,7 +135,7 @@ services:
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
+      --bootnodes=enode://f52ef1198b0b9533a7ffc8e83164a263e52030c5dca4176e963c91d3c7737ffcd027ee6b7e8b040f520737f470add09301a013606dca404db7fe2c4d0c4b7da3@172.16.239.11:30303
       --p2p-port=30306
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
@@ -145,46 +145,6 @@ services:
       --profile=ENTERPRISE
       --rpc-http-host=0.0.0.0
       --p2p-host=172.16.239.14
-      --network-id=1337
-      --min-gas-price=0
-      --target-gas-limit=1000000000
-      --tx-pool-max-size=50000
-      --revert-reason-enabled=true
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "ls", "/opt/besu/data"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  node-5:
-    container_name: node-5
-    image: hyperledger/besu:24.10.0
-    depends_on:
-      node-1:
-        condition: service_healthy
-    volumes:
-      - ../genesis.json:/opt/besu/genesis.json
-      - ../Node-5/data:/opt/besu/data
-    ports:
-      - "8549:8549"
-    networks:
-      besu-network:
-        ipv4_address: 172.16.239.15
-    command: >
-      --data-path=/opt/besu/data
-      --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f4acb4e7362c95070c89e4400738f66a99a4670596833987c37dd168c3f5859f84cd8fc012dc2ce5eddfbccddee0b12c621d5cae43cbcbfb93121c4ee09ab6c1@172.16.239.11:30303
-      --p2p-port=30307
-      --rpc-http-enabled=true
-      --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
-      --host-allowlist="*"
-      --rpc-http-cors-origins="*"
-      --rpc-http-port=8549
-      --profile=ENTERPRISE
-      --rpc-http-host=0.0.0.0
-      --p2p-host=172.16.239.15
       --network-id=1337
       --min-gas-price=0
       --target-gas-limit=1000000000

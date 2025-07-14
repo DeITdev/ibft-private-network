@@ -24,12 +24,6 @@
       "client": "besu",
       "rpcUrl": "http://172.16.239.14:8548",
       "privateTxUrl": ""
-    },
-    {
-      "name": "Node5",
-      "client": "besu",
-      "rpcUrl": "http://172.16.239.15:8549",
-      "privateTxUrl": ""
     }
   ]
 }

@@ -1,4 +1,4 @@
-// deploy-employee-contract.js
+// deploy-simple-storage.js
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -11,16 +11,17 @@ const Common = require('ethereumjs-common');
 const url = process.env.BLOCKCHAIN_URL;
 const chainId = parseInt(process.env.BLOCKCHAIN_CHAIN_ID, 10);
 const privateKey = process.env.PRIVATE_KEY;
+const initialValue = 123; // The initial value for the constructor
 // ---------------------
 
-console.log('--- EmployeeStorage Contract Deployment ---');
+console.log('--- SimpleStorage Contract Deployment ---');
 console.log('Connecting to blockchain at:', url);
 
 // Initialize Web3 with EEAClient
 const web3 = new EEAClient(new Web3(url), chainId);
 
 // Load compiled contract
-const contractPath = path.resolve(__dirname, 'compiled', 'EmployeeStorage.json');
+const contractPath = path.resolve(__dirname, 'compiled', 'SimpleStorage.json');
 if (!fs.existsSync(contractPath)) {
   console.error(`Compiled contract not found at ${contractPath}. Run compile script first.`);
   process.exit(1);
@@ -42,12 +43,20 @@ async function deploy() {
     const gasPrice = await web3.eth.getGasPrice();
     console.log("Gas Price:", gasPrice);
 
-    // Build the transaction object (no constructor args for this contract)
+    // Create contract instance to encode constructor arguments
+    const contractInstance = new web3.eth.Contract(contract.abi);
+    const deployTx = contractInstance.deploy({
+      data: contract.bytecode,
+      arguments: [initialValue]
+    });
+    const encodedData = deployTx.encodeABI();
+
+    // Build the transaction object
     const txObj = {
       nonce: web3.utils.toHex(txCount),
       gasPrice: web3.utils.toHex(gasPrice),
       gasLimit: web3.utils.toHex(3000000), // Generous gas limit for deployment
-      data: contract.bytecode,
+      data: encodedData,
       chainId: chainId
     };
 

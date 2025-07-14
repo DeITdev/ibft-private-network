@@ -11,7 +11,7 @@ if (!fs.existsSync(compiledDir)) {
 
 // Target contract
 const contractName = 'EmployeeStorage.sol';
-const contractPath = path.resolve(__dirname, 'contracts/employee', contractName);
+const contractPath = path.resolve(__dirname, 'contracts/HR', contractName);
 
 // Verify that the contract file exists
 if (!fs.existsSync(contractPath)) {

@@ -6,7 +6,7 @@ services:
       - "25000:25000/tcp"
     networks:
       blockchain-besu_besu-network:
-        ipv4_address: 172.16.239.16
+        ipv4_address: 172.16.239.15
     environment:
       - QE_CONFIG_PATH=/app/config.json
       - NODE_ENV=production
