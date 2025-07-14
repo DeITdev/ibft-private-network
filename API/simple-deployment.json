@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "contractType": "simple",
+  "contractName": "SimpleStorage",
+  "contractAddress": "0xBF921f94Fd9eF1738bE25D8CeCFDFE2C822c81B0",
+  "transactionHash": "0x61ed1587426a8dda0e118f336a1a2497cc4fd1fc3696241df682d886b937ca35",
+  "blockNumber": 4175,
+  "gasUsed": 133883,
+  "gasLimit": 202495,
+  "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
+  "deploymentTime": "2025-07-14T20:56:25.540Z",
+  "constructorArgs": [
+    123
+  ]
+}

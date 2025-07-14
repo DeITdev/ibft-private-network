@@ -1,268 +1,568 @@
-// app.js - Employee Blockchain API Server
-
-// Add this line at the very top
-if (!globalThis.fetch) {
-  globalThis.fetch = require('node-fetch');
-}
-
+// app.js - Simple Blockchain API Server
 require('dotenv').config();
 const express = require('express');
-const app = express();
 const bodyParser = require('body-parser');
 const Web3 = require('web3');
+const EEAClient = require("web3-eea");
 const Tx = require("ethereumjs-tx").Transaction;
 const Common = require('ethereumjs-common');
 const fs = require('fs');
 const path = require('path');
 
-// Configure middleware
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+const app = express();
 
-// Handle CORS
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
-    return res.status(200).json({});
+    return res.sendStatus(200);
   }
   next();
 });
 
-// Environment configuration with better port handling
-const HOST = process.env.HOST || '0.0.0.0'; // Listen on all interfaces
-const PORT = process.env.PORT ||
-  process.env.API_BLOCKCHAIN_ENDPOINT?.split(':')[2] ||
-  4001;
-const BLOCKCHAIN_URL = process.env.BLOCKCHAIN_URL;
-const BLOCKCHAIN_CHAIN_ID = parseInt(process.env.BLOCKCHAIN_CHAIN_ID);
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS; // Read from environment
+// Configuration
+const HOST = process.env.HOST || '0.0.0.0';
+const PORT = process.env.PORT || 4001;
+const BLOCKCHAIN_URL = process.env.BLOCKCHAIN_URL || 'http://localhost:8545';
+const BLOCKCHAIN_CHAIN_ID = parseInt(process.env.BLOCKCHAIN_CHAIN_ID || '1337');
 
-// Initialize web3
-let web3;
-try {
-  web3 = new Web3(BLOCKCHAIN_URL);
-  console.log('Web3 initialized with provider:', BLOCKCHAIN_URL);
-} catch (error) {
-  console.error('Error initializing Web3:', error.message);
-  process.exit(1);
-}
+console.log('Starting Blockchain API Server...');
+console.log(`Config: ${HOST}:${PORT} -> ${BLOCKCHAIN_URL} (Chain: ${BLOCKCHAIN_CHAIN_ID})`);
 
-// Load Employee contract
-const employeeContractPath = path.resolve(__dirname, 'compiled', 'EmployeeStorage.json');
-let employeeContract = null;
-let employeeContractAddress = null;
+// Initialize Web3
+const web3 = new EEAClient(new Web3(BLOCKCHAIN_URL), BLOCKCHAIN_CHAIN_ID);
 
-// Try to load contract
-try {
-  if (fs.existsSync(employeeContractPath)) {
-    employeeContract = require(employeeContractPath);
-    console.log('Employee contract ABI loaded successfully');
-
-    // First check environment variable for contract address
-    if (CONTRACT_ADDRESS) {
-      employeeContractAddress = CONTRACT_ADDRESS;
-      console.log('Employee contract address loaded from ENV:', employeeContractAddress);
-    } else {
-      // Fallback to deployment file
-      const deploymentPath = path.resolve(__dirname, 'employee-contract-deployment.json');
-      if (fs.existsSync(deploymentPath)) {
-        const deploymentInfo = require(deploymentPath);
-        employeeContractAddress = deploymentInfo.contractAddress;
-        console.log('Employee contract address loaded from file:', employeeContractAddress);
-      } else {
-        console.log('No deployment info found. You need to deploy the contract first or set CONTRACT_ADDRESS env var.');
-      }
-    }
-  } else {
-    console.log('Employee contract not compiled. Run: node compile-employee-contract.js');
+// Contract configurations
+const CONTRACTS = {
+  simple: {
+    name: 'SimpleStorage',
+    file: 'SimpleStorage.json',
+    defaultArgs: [123],
+    gasLimit: 5000000 // Increased gas limit
+  },
+  employee: {
+    name: 'EmployeeStorage',
+    file: 'EmployeeStorage.json',
+    defaultArgs: [],
+    gasLimit: 8000000 // Increased gas limit for larger contract
   }
-} catch (error) {
-  console.error('Error loading contract:', error.message);
+};
+
+// Load contract helper
+function loadContract(type) {
+  const config = CONTRACTS[type];
+  if (!config) throw new Error(`Unknown contract: ${type}`);
+
+  const filePath = path.join(__dirname, 'compiled', config.file);
+  if (!fs.existsSync(filePath)) throw new Error(`Not compiled: ${config.file}`);
+
+  return { contract: require(filePath), config };
 }
 
-// Helper function to create transaction
-async function createTransaction(privateKey, contractAddress, encodedData, gasLimit = 800000) {
-  try {
-    // Clean private key
-    privateKey = privateKey.replace(/^0x/, '');
+// Transaction helper
+async function sendTransaction(privateKey, contractAddress, data, gasLimit = 800000) {
+  const key = privateKey.replace(/^0x/, '');
+  const account = web3.eth.accounts.privateKeyToAccount('0x' + key);
+  const nonce = await web3.eth.getTransactionCount(account.address, 'pending');
+  let gasPrice = await web3.eth.getGasPrice();
 
-    // Create account from private key
-    const account = web3.eth.accounts.privateKeyToAccount('0x' + privateKey);
+  // Fix zero gas price for local networks
+  if (!gasPrice || gasPrice === '0') gasPrice = '1000000000';
 
-    // Get transaction count and gas price
-    const txCount = await web3.eth.getTransactionCount(account.address, "pending");
-    let gasPrice = await web3.eth.getGasPrice();
+  console.log(`Transaction Details:`);
+  console.log(`  From: ${account.address}`);
+  console.log(`  To: ${contractAddress}`);
+  console.log(`  Nonce: ${nonce}`);
+  console.log(`  Gas Price: ${gasPrice}`);
+  console.log(`  Gas Limit: ${gasLimit}`);
 
-    // Fix zero gas price issue for local Besu
-    if (gasPrice === '0' || gasPrice === 0 || parseInt(gasPrice) === 0) {
-      gasPrice = '1000000000'; // 1 Gwei
-      console.log('Fixed gas price from 0 to 1 Gwei');
-    }
+  const txObj = {
+    nonce: web3.utils.toHex(nonce),
+    gasPrice: web3.utils.toHex(gasPrice),
+    gasLimit: web3.utils.toHex(gasLimit),
+    data: data,
+    to: contractAddress,
+    chainId: BLOCKCHAIN_CHAIN_ID
+  };
 
-    // Estimate gas for this specific transaction
-    let estimatedGas;
-    try {
-      estimatedGas = await web3.eth.estimateGas({
-        to: contractAddress,
-        data: encodedData,
-        from: account.address
-      });
+  const custom = Common.default.forCustomChain('mainnet', {
+    networkId: 123,
+    chainId: BLOCKCHAIN_CHAIN_ID,
+    name: 'besu-network'
+  }, 'istanbul');
 
-      // Add 30% buffer to estimated gas
-      gasLimit = Math.floor(estimatedGas * 1.3);
-      console.log(`Estimated gas: ${estimatedGas}, Using: ${gasLimit}`);
+  const tx = new Tx(txObj, { common: custom });
+  tx.sign(Buffer.from(key, 'hex'));
 
-    } catch (error) {
-      console.log('Gas estimation failed, using default:', gasLimit);
-    }
+  console.log('Sending transaction...');
+  const receipt = await web3.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'));
 
-    // Build transaction object
-    const txObj = {
-      nonce: web3.utils.toHex(txCount),
-      gasPrice: web3.utils.toHex(gasPrice), // Use fixed gas price
-      gasLimit: web3.utils.toHex(gasLimit),
-      data: encodedData,
-      to: contractAddress,
-      chainId: BLOCKCHAIN_CHAIN_ID
-    };
+  console.log('Transaction Receipt:');
+  console.log(`  Transaction Hash: ${receipt.transactionHash}`);
+  console.log(`  Block Number: ${receipt.blockNumber}`);
+  console.log(`  Block Hash: ${receipt.blockHash}`);
+  console.log(`  Gas Used: ${receipt.gasUsed}/${gasLimit}`);
+  console.log(`  Status: ${receipt.status ? 'Success' : 'Failed'}`);
+  console.log(`  Cumulative Gas Used: ${receipt.cumulativeGasUsed}`);
 
-    // Log transaction details for debugging
-    console.log('Transaction details:');
-    console.log(`   Gas Limit: ${gasLimit}`);
-    console.log(`   Gas Price: ${gasPrice}`);
-    console.log(`   Nonce: ${txCount}`);
+  if (!receipt.status) throw new Error('Transaction failed');
 
-    // Create custom chain configuration
-    const custom = Common.default.forCustomChain(
-      "mainnet",
-      {
-        networkId: 123,
-        chainId: BLOCKCHAIN_CHAIN_ID,
-        name: "besu-network"
-      },
-      "istanbul"
-    );
-
-    // Create, sign, and send transaction
-    const tx = new Tx(txObj, { common: custom });
-    const privateKeyBuffer = Buffer.from(privateKey, "hex");
-    tx.sign(privateKeyBuffer);
-
-    const serialized = tx.serialize();
-    const rawTx = "0x" + serialized.toString("hex");
-
-    const receipt = await web3.eth.sendSignedTransaction(rawTx);
-
-    // Check if transaction was successful
-    if (!receipt.status) {
-      throw new Error(`Transaction failed. Gas used: ${receipt.gasUsed}/${gasLimit}`);
-    }
-
-    return receipt;
-  } catch (error) {
-    console.error('Transaction error:', error.message);
-    throw error;
-  }
-}
-
-// Convert ISO timestamp to Unix timestamp
-function isoToUnixTimestamp(isoString) {
-  return Math.floor(new Date(isoString).getTime() / 1000);
+  return receipt;
 }
 
 // Routes
 
-// Health check
+// Server status
 app.get('/', (req, res) => {
   res.json({
-    message: 'Employee Blockchain API Server',
+    name: 'Blockchain API Server',
     status: 'running',
-    contractAddress: employeeContractAddress,
-    blockchain: BLOCKCHAIN_URL,
-    chainId: BLOCKCHAIN_CHAIN_ID,
-    port: PORT,
-    host: HOST
+    blockchain: { url: BLOCKCHAIN_URL, chainId: BLOCKCHAIN_CHAIN_ID },
+    contracts: Object.keys(CONTRACTS),
+    endpoints: [
+      'GET /',
+      'POST /deploy',
+      'GET /deployments',
+      'GET /simple',
+      'POST /simple',
+      'GET /employees',
+      'POST /employees',
+      'GET /employees/:id'
+    ]
   });
 });
 
+// Deploy contract
+app.post('/deploy', async (req, res) => {
+  try {
+    const { privateKey, contractType, constructorArgs } = req.body;
 
-// === Import and use the employee routes ===
-const employeeRoutes = require('./user-route')(web3, employeeContract, employeeContractAddress, createTransaction, isoToUnixTimestamp);
-app.use('/employees', employeeRoutes);
-
-
-// Contract info endpoint
-app.get('/contract/info', (req, res) => {
-  res.json({
-    contractAddress: employeeContractAddress,
-    blockchain: BLOCKCHAIN_URL,
-    chainId: BLOCKCHAIN_CHAIN_ID,
-    contractLoaded: !!employeeContract,
-    contractDeployed: !!employeeContractAddress,
-    server: {
-      host: HOST,
-      port: PORT
+    if (!privateKey) return res.status(400).json({ error: 'privateKey required' });
+    if (!contractType || !CONTRACTS[contractType]) {
+      return res.status(400).json({ error: `contractType required: ${Object.keys(CONTRACTS).join(', ')}` });
     }
-  });
-});
 
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('Unhandled error:', error);
-  res.status(500).json({
-    error: 'Internal server error',
-    details: error.message
-  });
-});
+    console.log(`Deploying ${contractType} contract...`);
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  server.close(() => {
-    console.log('Process terminated');
-    process.exit(0);
-  });
-});
+    const { contract, config } = loadContract(contractType);
+    const args = constructorArgs || config.defaultArgs;
+    const key = privateKey.replace(/^0x/, '');
+    const account = web3.eth.accounts.privateKeyToAccount('0x' + key);
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully...');
-  server.close(() => {
-    console.log('Process terminated');
-    process.exit(0);
-  });
-});
+    console.log(`Deployer: ${account.address}`);
+    console.log(`Args: ${JSON.stringify(args)}`);
+    console.log(`Bytecode length: ${contract.bytecode.length} characters`);
 
-// Start server with proper host binding
-const server = app.listen(PORT, HOST, () => {
-  const address = server.address();
-  console.log('Employee Blockchain API Server started');
-  console.log('Server running on:');
-  console.log(`   Host: ${address.address}`);
-  console.log(`   Port: ${address.port}`);
-  console.log(`   URL: http://${address.address === '::' ? 'localhost' : address.address}:${address.port}`);
-  console.log('Blockchain URL:', BLOCKCHAIN_URL);
-  console.log('Chain ID:', BLOCKCHAIN_CHAIN_ID);
-  console.log('Contract Address:', employeeContractAddress || 'Not deployed');
-  console.log('\nAvailable Endpoints:');
-  console.log('  GET  /', '- Server status');
-  console.log('  GET  /employees', '- List all employees');
-  console.log('  GET  /employees/:recordId', '- Get specific employee');
-  console.log('  POST /employees', '- Store employee data');
-  console.log('  GET  /employees/:recordId/metadata', '- Get employee metadata');
-  console.log('  GET  /contract/info', '- Contract information');
-  console.log('\nReady to handle CDC events!');
+    // Check if bytecode looks valid
+    if (!contract.bytecode || contract.bytecode.length < 10) {
+      throw new Error('Invalid bytecode - contract may not be compiled correctly');
+    }
 
-  // Additional network interface information
-  const networkInterfaces = require('os').networkInterfaces();
-  console.log('\nAvailable network interfaces:');
-  Object.keys(networkInterfaces).forEach(interfaceName => {
-    networkInterfaces[interfaceName].forEach(interface => {
-      if (interface.family === 'IPv4' && !interface.internal) {
-        console.log(`   ${interfaceName}: http://${interface.address}:${address.port}`);
+    // Prepare deployment data
+    let deployData;
+    if (args.length > 0) {
+      const instance = new web3.eth.Contract(contract.abi);
+      deployData = instance.deploy({ data: contract.bytecode, arguments: args }).encodeABI();
+    } else {
+      deployData = contract.bytecode;
+    }
+
+    console.log(`Deploy data length: ${deployData.length} characters`);
+
+    // Get transaction details
+    const nonce = await web3.eth.getTransactionCount(account.address, 'pending');
+    let gasPrice = await web3.eth.getGasPrice();
+    if (!gasPrice || gasPrice === '0') gasPrice = '1000000000';
+
+    console.log(`Transaction nonce: ${nonce}`);
+    console.log(`Gas price: ${gasPrice}`);
+
+    // Try to estimate gas first
+    let gasLimit = config.gasLimit;
+    try {
+      const estimatedGas = await web3.eth.estimateGas({
+        data: deployData,
+        from: account.address
+      });
+      gasLimit = Math.floor(parseInt(estimatedGas) * 1.5); // Add 50% buffer
+      console.log(`Estimated gas: ${estimatedGas}, Using: ${gasLimit}`);
+    } catch (estimateError) {
+      console.log(`Gas estimation failed: ${estimateError.message}`);
+      console.log(`Using default gas limit: ${gasLimit}`);
+    }
+
+    const txObj = {
+      nonce: web3.utils.toHex(nonce),
+      gasPrice: web3.utils.toHex(gasPrice),
+      gasLimit: web3.utils.toHex(gasLimit),
+      data: deployData,
+      chainId: BLOCKCHAIN_CHAIN_ID
+    };
+
+    const custom = Common.default.forCustomChain('mainnet', {
+      chainId: BLOCKCHAIN_CHAIN_ID
+    }, 'istanbul');
+
+    const tx = new Tx(txObj, { common: custom });
+    tx.sign(Buffer.from(key, 'hex'));
+
+    console.log('Sending deployment transaction...');
+    console.log(`Transaction details:`);
+    console.log(`  Gas Limit: ${gasLimit}`);
+    console.log(`  Gas Price: ${gasPrice}`);
+    console.log(`  Chain ID: ${BLOCKCHAIN_CHAIN_ID}`);
+
+    const receipt = await web3.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'));
+
+    // Log detailed receipt information
+    console.log('Transaction Receipt:');
+    console.log(`  Block Hash: ${receipt.blockHash}`);
+    console.log(`  Block Number: ${receipt.blockNumber}`);
+    console.log(`  Transaction Hash: ${receipt.transactionHash}`);
+    console.log(`  Contract Address: ${receipt.contractAddress}`);
+    console.log(`  Gas Used: ${receipt.gasUsed}`);
+    console.log(`  Gas Limit: ${gasLimit}`);
+    console.log(`  Status: ${receipt.status ? 'Success' : 'Failed'}`);
+    console.log(`  From: ${receipt.from}`);
+    console.log(`  Cumulative Gas Used: ${receipt.cumulativeGasUsed}`);
+
+    if (!receipt.contractAddress) throw new Error('Deployment failed - no contract address');
+    if (!receipt.status) throw new Error('Deployment failed - transaction reverted');
+
+    const info = {
+      success: true,
+      contractType,
+      contractName: config.name,
+      contractAddress: receipt.contractAddress,
+      transactionHash: receipt.transactionHash,
+      blockNumber: receipt.blockNumber,
+      blockHash: receipt.blockHash,
+      gasUsed: receipt.gasUsed,
+      gasLimit: gasLimit,
+      gasPrice: gasPrice,
+      deployerAddress: account.address,
+      deploymentTime: new Date().toISOString(),
+      constructorArgs: args,
+      transactionDetails: {
+        nonce: nonce,
+        cumulativeGasUsed: receipt.cumulativeGasUsed,
+        effectiveGasPrice: receipt.effectiveGasPrice,
+        status: receipt.status,
+        chainId: BLOCKCHAIN_CHAIN_ID
+      }
+    };
+
+    // Save deployment info
+    const saveFile = path.join(__dirname, `${contractType}-deployment.json`);
+    fs.writeFileSync(saveFile, JSON.stringify(info, null, 2));
+
+    console.log('Deployment successful!');
+    console.log(`Contract deployed at: ${receipt.contractAddress}`);
+    console.log(`Gas efficiency: ${receipt.gasUsed}/${gasLimit} (${((receipt.gasUsed / gasLimit) * 100).toFixed(2)}%)`);
+    console.log(`Deployment file saved: ${saveFile}`);
+
+    res.json(info);
+
+  } catch (error) {
+    console.error('Deployment failed:', error.message);
+
+    // Provide more specific error messages
+    let errorMsg = error.message;
+    if (error.message.includes('reverted')) {
+      errorMsg = 'Contract deployment reverted. This usually means:\n' +
+        '1. Contract constructor failed\n' +
+        '2. Not enough gas\n' +
+        '3. Invalid constructor arguments\n' +
+        '4. Contract compilation error';
+    }
+
+    res.status(500).json({
+      success: false,
+      error: errorMsg,
+      troubleshooting: {
+        suggestions: [
+          'Check if contracts are compiled correctly',
+          'Verify constructor arguments',
+          'Ensure sufficient gas limit',
+          'Check blockchain connection'
+        ]
       }
     });
+  }
+});
+
+// Get deployments
+app.get('/deployments', (req, res) => {
+  const deployments = {};
+  Object.keys(CONTRACTS).forEach(type => {
+    const file = path.join(__dirname, `${type}-deployment.json`);
+    if (fs.existsSync(file)) {
+      deployments[type] = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } else {
+      deployments[type] = { deployed: false };
+    }
   });
+  res.json({ success: true, data: deployments });
+});
+
+// Debug endpoint - check compilation status
+app.get('/debug', (req, res) => {
+  const debug = {
+    compiledContracts: {},
+    nodeInfo: {},
+    errors: []
+  };
+
+  // Check compiled contracts
+  Object.keys(CONTRACTS).forEach(type => {
+    const config = CONTRACTS[type];
+    const file = path.join(__dirname, 'compiled', config.file);
+
+    if (fs.existsSync(file)) {
+      try {
+        const contract = require(file);
+        debug.compiledContracts[type] = {
+          exists: true,
+          hasABI: !!contract.abi,
+          hasBytecode: !!contract.bytecode,
+          bytecodeLength: contract.bytecode ? contract.bytecode.length : 0,
+          abiMethods: contract.abi ? contract.abi.filter(x => x.type === 'function').length : 0
+        };
+      } catch (err) {
+        debug.compiledContracts[type] = {
+          exists: true,
+          error: err.message
+        };
+      }
+    } else {
+      debug.compiledContracts[type] = {
+        exists: false,
+        file: file
+      };
+      debug.errors.push(`Contract ${type} not compiled: ${config.file}`);
+    }
+  });
+
+  res.json(debug);
+});
+
+// Simple Storage - Read
+app.get('/simple', async (req, res) => {
+  try {
+    const deployFile = path.join(__dirname, 'simple-deployment.json');
+    if (!fs.existsSync(deployFile)) {
+      return res.status(404).json({ error: 'Simple contract not deployed' });
+    }
+
+    const deployment = JSON.parse(fs.readFileSync(deployFile, 'utf8'));
+    const { contract } = loadContract('simple');
+    const instance = new web3.eth.Contract(contract.abi, deployment.contractAddress);
+
+    const value = await instance.methods.get().call();
+    res.json({ success: true, value, contractAddress: deployment.contractAddress });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Simple Storage - Write
+app.post('/simple', async (req, res) => {
+  try {
+    const { privateKey, value } = req.body;
+    if (!privateKey) return res.status(400).json({ error: 'privateKey required' });
+    if (value === undefined) return res.status(400).json({ error: 'value required' });
+
+    const deployFile = path.join(__dirname, 'simple-deployment.json');
+    if (!fs.existsSync(deployFile)) {
+      return res.status(404).json({ error: 'Simple contract not deployed' });
+    }
+
+    const deployment = JSON.parse(fs.readFileSync(deployFile, 'utf8'));
+    const { contract } = loadContract('simple');
+    const instance = new web3.eth.Contract(contract.abi, deployment.contractAddress);
+
+    const data = instance.methods.set(value).encodeABI();
+    console.log(`Setting simple storage value: ${value}`);
+
+    const receipt = await sendTransaction(privateKey, deployment.contractAddress, data, 300000);
+    console.log('Simple storage value updated successfully!');
+
+    res.json({
+      success: true,
+      operation: 'set_value',
+      value,
+      contractAddress: deployment.contractAddress,
+      transactionHash: receipt.transactionHash,
+      blockNumber: receipt.blockNumber,
+      blockHash: receipt.blockHash,
+      gasUsed: receipt.gasUsed,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Update failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Employees - List
+app.get('/employees', async (req, res) => {
+  try {
+    const deployFile = path.join(__dirname, 'employee-deployment.json');
+    if (!fs.existsSync(deployFile)) {
+      return res.status(404).json({ error: 'Employee contract not deployed' });
+    }
+
+    const deployment = JSON.parse(fs.readFileSync(deployFile, 'utf8'));
+    const { contract } = loadContract('employee');
+    const instance = new web3.eth.Contract(contract.abi, deployment.contractAddress);
+
+    const total = await instance.methods.getTotalEmployees().call();
+    if (total === '0') {
+      return res.json({ success: true, employees: [], total: 0 });
+    }
+
+    const ids = await instance.methods.getAllEmployeeIds().call();
+    const employees = [];
+
+    for (const id of ids) {
+      try {
+        const emp = await instance.methods.getEmployee(id).call();
+        employees.push({
+          recordId: emp.recordId,
+          createdTimestamp: new Date(parseInt(emp.createdTimestamp) * 1000).toISOString(),
+          modifiedTimestamp: new Date(parseInt(emp.modifiedTimestamp) * 1000).toISOString(),
+          modifiedBy: emp.modifiedBy,
+          allData: JSON.parse(emp.allData)
+        });
+      } catch (err) {
+        console.error(`Error loading employee ${id}:`, err.message);
+      }
+    }
+
+    res.json({ success: true, employees, total: employees.length });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Employees - Store
+app.post('/employees', async (req, res) => {
+  try {
+    const { privateKey, employeeData } = req.body;
+    if (!privateKey) return res.status(400).json({ error: 'privateKey required' });
+    if (!employeeData?.recordId) return res.status(400).json({ error: 'employeeData with recordId required' });
+
+    const deployFile = path.join(__dirname, 'employee-deployment.json');
+    if (!fs.existsSync(deployFile)) {
+      return res.status(404).json({ error: 'Employee contract not deployed' });
+    }
+
+    const deployment = JSON.parse(fs.readFileSync(deployFile, 'utf8'));
+    const { contract } = loadContract('employee');
+    const instance = new web3.eth.Contract(contract.abi, deployment.contractAddress);
+
+    const { recordId, createdTimestamp, modifiedTimestamp, modifiedBy, allData } = employeeData;
+
+    const createdUnix = Math.floor(new Date(createdTimestamp).getTime() / 1000);
+    const modifiedUnix = Math.floor(new Date(modifiedTimestamp).getTime() / 1000);
+    const dataString = typeof allData === 'string' ? allData : JSON.stringify(allData);
+
+    const data = instance.methods.storeEmployee(
+      recordId, createdUnix, modifiedUnix, modifiedBy, dataString
+    ).encodeABI();
+
+    console.log(`Storing employee data: ${recordId}`);
+    const receipt = await sendTransaction(privateKey, deployment.contractAddress, data);
+    console.log('Employee data stored successfully!');
+
+    res.json({
+      success: true,
+      operation: 'store_employee',
+      recordId,
+      contractAddress: deployment.contractAddress,
+      transactionHash: receipt.transactionHash,
+      blockNumber: receipt.blockNumber,
+      blockHash: receipt.blockHash,
+      gasUsed: receipt.gasUsed,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Store failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Employees - Get by ID
+app.get('/employees/:recordId', async (req, res) => {
+  try {
+    const { recordId } = req.params;
+
+    const deployFile = path.join(__dirname, 'employee-deployment.json');
+    if (!fs.existsSync(deployFile)) {
+      return res.status(404).json({ error: 'Employee contract not deployed' });
+    }
+
+    const deployment = JSON.parse(fs.readFileSync(deployFile, 'utf8'));
+    const { contract } = loadContract('employee');
+    const instance = new web3.eth.Contract(contract.abi, deployment.contractAddress);
+
+    const exists = await instance.methods.doesEmployeeExist(recordId).call();
+    if (!exists) {
+      return res.status(404).json({ error: `Employee ${recordId} not found` });
+    }
+
+    const emp = await instance.methods.getEmployee(recordId).call();
+    res.json({
+      success: true,
+      recordId: emp.recordId,
+      createdTimestamp: new Date(parseInt(emp.createdTimestamp) * 1000).toISOString(),
+      modifiedTimestamp: new Date(parseInt(emp.modifiedTimestamp) * 1000).toISOString(),
+      modifiedBy: emp.modifiedBy,
+      allData: JSON.parse(emp.allData)
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });
+});
+
+// Start server
+const server = app.listen(PORT, HOST, async () => {
+  console.log('Server started!');
+  console.log(`URL: http://localhost:${PORT}`);
+
+  // Test blockchain connection
+  try {
+    const connected = await web3.eth.net.isListening();
+    if (connected) {
+      const chainId = await web3.eth.getChainId();
+      const block = await web3.eth.getBlockNumber();
+      console.log(`Blockchain: Chain ${chainId}, Block ${block}`);
+    }
+  } catch (error) {
+    console.error('Blockchain connection failed:', error.message);
+  }
+
+  console.log('Endpoints ready!');
 });

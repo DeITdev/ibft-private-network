@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.0;
 
 contract SimpleStorage {
-  uint public storedData;
-  event stored(address _to, uint _amount);
+    uint256 public storedData;
+    
+    event Stored(address indexed sender, uint256 value);
 
-  constructor(uint initVal) {
-    emit stored(msg.sender, initVal);
-    storedData = initVal;
-  }
+    constructor(uint256 initVal) {
+        storedData = initVal;
+        emit Stored(msg.sender, initVal);
+    }
 
-  function set(uint x) public {
-    emit stored(msg.sender, x);
-    storedData = x;
-  }
+    function set(uint256 x) public {
+        storedData = x;
+        emit Stored(msg.sender, x);
+    }
 
-  function get() view public returns (uint retVal) {
-    return storedData;
-  }
+    function get() public view returns (uint256) {
+        return storedData;
+    }
 }

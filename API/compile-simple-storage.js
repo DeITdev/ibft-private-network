@@ -1,4 +1,4 @@
-// compile-simple-storage.js
+// compile-simple-storage.js - Fixed for Besu compatibility
 const fs = require('fs');
 const path = require('path');
 const solc = require('solc');
@@ -11,7 +11,7 @@ if (!fs.existsSync(compiledDir)) {
 
 // Path to contract
 const contractName = 'SimpleStorage.sol';
-const contractPath = path.resolve(__dirname, 'contracts', 'simple', contractName);
+const contractPath = path.resolve(__dirname, 'contracts', 'Simple', contractName);
 
 // Verify that the contract file exists
 if (!fs.existsSync(contractPath)) {
@@ -23,7 +23,7 @@ if (!fs.existsSync(contractPath)) {
 const contractSource = fs.readFileSync(contractPath, 'utf8');
 console.log(`Read contract source from ${contractPath}`);
 
-// Prepare input for the compiler
+// Prepare input for the compiler with Besu-compatible settings
 const input = {
   language: 'Solidity',
   sources: {
@@ -36,6 +36,7 @@ const input = {
       enabled: true,
       runs: 200
     },
+    evmVersion: 'istanbul', // Use Istanbul EVM for Besu compatibility
     outputSelection: {
       '*': {
         '*': ['abi', 'evm.bytecode']
@@ -45,7 +46,7 @@ const input = {
 };
 
 // Compile the contract
-console.log(`Compiling ${contractName}...`);
+console.log(`Compiling ${contractName} with Istanbul EVM for Besu compatibility...`);
 const output = JSON.parse(solc.compile(JSON.stringify(input)));
 
 // Check for errors
@@ -72,4 +73,21 @@ const contractOutput = {
 
 const outputPath = path.join(compiledDir, 'SimpleStorage.json');
 fs.writeFileSync(outputPath, JSON.stringify(contractOutput, null, 2));
-console.log(`SimpleStorage compiled successfully to ${outputPath}`);
+
+console.log(`SimpleStorage compiled successfully!`);
+console.log(`Output: ${outputPath}`);
+console.log(`Bytecode length: ${compiledContract.evm.bytecode.object.length / 2} bytes`);
+console.log(`EVM Version: Istanbul (Besu compatible)`);
+console.log(`ABI methods: ${compiledContract.abi.filter(item => item.type === 'function').length}`);
+
+// Validate bytecode
+if (compiledContract.evm.bytecode.object.length < 100) {
+  console.warn('Warning: Bytecode seems very short, check compilation');
+} else {
+  console.log('Bytecode looks valid');
+}
+
+console.log('\nNext steps:');
+console.log('1. Run: node compile-employee-contract.js');
+console.log('2. Start server: node app.js');
+console.log('3. Deploy via Postman using /deploy endpoint');

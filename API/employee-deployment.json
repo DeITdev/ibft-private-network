@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "contractType": "employee",
+  "contractName": "EmployeeStorage",
+  "contractAddress": "0x3484B20600854091C166C062FacAd700123f5f71",
+  "transactionHash": "0x85f5fc33702767d3c220bb409588c8d6415aa68025d5f89fe5705c3e0af341c2",
+  "blockNumber": 4535,
+  "blockHash": "0x75695c167e54fa6dcefa51d0d4afd30b05a9ba9888370d9a8dd40781673421b8",
+  "gasUsed": 1043527,
+  "gasLimit": 1579464,
+  "gasPrice": "1000000000",
+  "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
+  "deploymentTime": "2025-07-14T21:09:21.559Z",
+  "constructorArgs": [],
+  "transactionDetails": {
+    "nonce": 21,
+    "cumulativeGasUsed": 1043527,
+    "effectiveGasPrice": 1000000000,
+    "status": true,
+    "chainId": 1337
+  }
+}
