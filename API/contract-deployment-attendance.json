@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "contractType": "attendance",
+  "contractName": "AttendanceStorage",
+  "contractAddress": "0xc83003B2AD5C3EF3e93Cc3Ef0a48E84dc8DBD718",
+  "transactionHash": "0x83b8f487480e60cdd73659c376f3ad71ff580a11638269f7d03f9f8c8a57df73",
+  "blockNumber": 9310,
+  "blockHash": "0x503aac22bc72a423be8a22eb78f4260bf3cbc75be008ae6da722809af025df22",
+  "gasUsed": 1044379,
+  "gasLimit": 8000000,
+  "gasPrice": "1000000000",
+  "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
+  "deploymentTime": "2025-07-15T04:37:50.679Z",
+  "constructorArgs": [],
+  "transactionDetails": {
+    "nonce": 39,
+    "cumulativeGasUsed": 1044379,
+    "effectiveGasPrice": 1000000000,
+    "status": true,
+    "chainId": 1337
+  }
+}

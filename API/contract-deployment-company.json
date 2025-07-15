@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "contractType": "company",
+  "contractName": "CompanyStorage",
+  "contractAddress": "0x0F095aeA9540468B19829d02cC811Ebe5173D615",
+  "transactionHash": "0x199228c251940f226d5020fc4c1f7a64e3f2486995717b31980e941684c356d4",
+  "blockNumber": 9325,
+  "blockHash": "0x4841f901497d6328cb0eb10cc90a46e64253d8134541d3da45374c32f84917d1",
+  "gasUsed": 1043083,
+  "gasLimit": 8000000,
+  "gasPrice": "1000000000",
+  "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
+  "deploymentTime": "2025-07-15T04:38:21.118Z",
+  "constructorArgs": [],
+  "transactionDetails": {
+    "nonce": 41,
+    "cumulativeGasUsed": 1043083,
+    "effectiveGasPrice": 1000000000,
+    "status": true,
+    "chainId": 1337
+  }
+}

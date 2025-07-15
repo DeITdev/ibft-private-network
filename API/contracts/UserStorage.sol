@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 contract UserStorage {
     // User data structure
     struct User {
-        string recordId;          // adhiarja.puspita@pfm.com
-        uint256 createdTimestamp; // 2025-06-26T15:31:09.543Z converted to timestamp
-        uint256 modifiedTimestamp; // 2025-07-14T20:43:00.064Z converted to timestamp
-        string modifiedBy;        // Administrator
+        string recordId;          // User email or ID
+        uint256 createdTimestamp; // creation timestamp converted to unix
+        uint256 modifiedTimestamp; // modified timestamp converted to unix
+        string modifiedBy;        // Administrator or user email
         string allData;           // Complete JSON string of all user data
     }
     
@@ -66,13 +66,13 @@ contract UserStorage {
     ) {
         require(userExists[_recordId], "User does not exist");
         
-        User memory usr = users[_recordId];
+        User memory user = users[_recordId];
         return (
-            usr.recordId,
-            usr.createdTimestamp,
-            usr.modifiedTimestamp,
-            usr.modifiedBy,
-            usr.allData
+            user.recordId,
+            user.createdTimestamp,
+            user.modifiedTimestamp,
+            user.modifiedBy,
+            user.allData
         );
     }
     
@@ -106,12 +106,12 @@ contract UserStorage {
     ) {
         require(userExists[_recordId], "User does not exist");
         
-        User memory usr = users[_recordId];
+        User memory user = users[_recordId];
         return (
-            usr.recordId,
-            usr.createdTimestamp,
-            usr.modifiedTimestamp,
-            usr.modifiedBy
+            user.recordId,
+            user.createdTimestamp,
+            user.modifiedTimestamp,
+            user.modifiedBy
         );
     }
 }
