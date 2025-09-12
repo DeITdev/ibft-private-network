@@ -2,18 +2,21 @@
   "success": true,
   "contractType": "employee",
   "contractName": "EmployeeStorage",
-  "contractAddress": "0xa9ECbe3F9600f9bF3ec88a428387316714ac95a0",
-  "transactionHash": "0x88bcfb3c71311551cef14f38550b047ec506061078b7b8068caa62e85b0cb853",
-  "blockNumber": 5542,
-  "blockHash": "0x2356707968c785453c7fb5f9e109d34ccf4b1585b108b2d652fd7f5f58db1285",
-  "gasUsed": 1043527,
-  "gasLimit": 1579464,
+  "contractAddress": "0x0Ad218Ef82927104574bA479bC6b613c02C38966",
+  "transactionHash": "0xc653ffde3f079efc6f8a8dd1df0ceddeee8483779e49dd596061412a11edd6d1",
+  "blockNumber": 16549,
+  "blockHash": "0x9aaf00a7ed05d91b24c339694c5267c357d9422b6375118261dc4f8997fda729",
+  "gasUsed": 1040068,
+  "gasLimit": 1259388,
   "gasPrice": "1000000000",
   "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
-  "deploymentTime": "2025-07-14T21:42:55.344Z",
+  "deploymentTime": "2025-09-12T09:36:32.659Z",
   "constructorArgs": [],
-  "network": {
-    "url": "http://localhost:8545",
+  "transactionDetails": {
+    "nonce": 321,
+    "cumulativeGasUsed": 1040068,
+    "effectiveGasPrice": 1000000000,
+    "status": true,
     "chainId": 1337
   }
 }

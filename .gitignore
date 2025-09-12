@@ -7,3 +7,5 @@ caches
 besu.networks
 besu.ports
 compiled
+DATABASE_METADATA.json
+VERSION_METADATA.json

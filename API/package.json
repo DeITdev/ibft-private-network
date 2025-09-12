@@ -4,7 +4,14 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "node deploy-contract.js --type",
+    "deploy:user": "node deploy-contract.js --type user",
+    "deploy:employee": "node deploy-contract.js --type employee",
+    "deploy:attendance": "node deploy-contract.js --type attendance",
+    "deploy:company": "node deploy-contract.js --type company",
+    "deploy:task": "node deploy-contract.js --type task",
+    "deploy:simple": "node deploy-contract.js --type simple"
   },
   "keywords": [],
   "author": "",

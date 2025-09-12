@@ -53,7 +53,7 @@ services:
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f52ef1198b0b9533a7ffc8e83164a263e52030c5dca4176e963c91d3c7737ffcd027ee6b7e8b040f520737f470add09301a013606dca404db7fe2c4d0c4b7da3@172.16.239.11:30303
+      --bootnodes=enode://8fbfa5c13e0913f9bfbbf8a08ecc90ca7c13bc9d33a86e5e9b6aae814f1b501195977fbedac8f94bd4cf4bf90fceb9966572c03dcde7e170110c6a6be78d2048@172.16.239.11:30303
       --p2p-port=30304
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
@@ -94,7 +94,7 @@ services:
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f52ef1198b0b9533a7ffc8e83164a263e52030c5dca4176e963c91d3c7737ffcd027ee6b7e8b040f520737f470add09301a013606dca404db7fe2c4d0c4b7da3@172.16.239.11:30303
+      --bootnodes=enode://8fbfa5c13e0913f9bfbbf8a08ecc90ca7c13bc9d33a86e5e9b6aae814f1b501195977fbedac8f94bd4cf4bf90fceb9966572c03dcde7e170110c6a6be78d2048@172.16.239.11:30303
       --p2p-port=30305
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
@@ -135,7 +135,7 @@ services:
     command: >
       --data-path=/opt/besu/data
       --genesis-file=/opt/besu/genesis.json
-      --bootnodes=enode://f52ef1198b0b9533a7ffc8e83164a263e52030c5dca4176e963c91d3c7737ffcd027ee6b7e8b040f520737f470add09301a013606dca404db7fe2c4d0c4b7da3@172.16.239.11:30303
+      --bootnodes=enode://8fbfa5c13e0913f9bfbbf8a08ecc90ca7c13bc9d33a86e5e9b6aae814f1b501195977fbedac8f94bd4cf4bf90fceb9966572c03dcde7e170110c6a6be78d2048@172.16.239.11:30303
       --p2p-port=30306
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
