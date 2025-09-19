@@ -23,58 +23,10 @@ function getEmployeeDeployment() {
   return JSON.parse(fs.readFileSync(deployFile, 'utf8'));
 }
 
-// Helper function for transactions (imported from main app)
-async function sendTransaction(web3, privateKey, contractAddress, data, gasLimit = 800000) {
-  const Tx = require("ethereumjs-tx").Transaction;
-  const Common = require('ethereumjs-common');
-
-  const key = privateKey.replace(/^0x/, '');
-  const account = web3.eth.accounts.privateKeyToAccount('0x' + key);
-  const nonce = await web3.eth.getTransactionCount(account.address, 'pending');
-  let gasPrice = await web3.eth.getGasPrice();
-
-  if (!gasPrice || gasPrice === '0') gasPrice = '1000000000';
-
-  console.log(`Transaction Details:`);
-  console.log(`  From: ${account.address}`);
-  console.log(`  To: ${contractAddress}`);
-  console.log(`  Nonce: ${nonce}`);
-  console.log(`  Gas Price: ${gasPrice}`);
-  console.log(`  Gas Limit: ${gasLimit}`);
-
-  const txObj = {
-    nonce: web3.utils.toHex(nonce),
-    gasPrice: web3.utils.toHex(gasPrice),
-    gasLimit: web3.utils.toHex(gasLimit),
-    data: data,
-    to: contractAddress,
-    chainId: process.env.BLOCKCHAIN_CHAIN_ID || 1337
-  };
-
-  const custom = Common.default.forCustomChain('mainnet', {
-    networkId: 123,
-    chainId: process.env.BLOCKCHAIN_CHAIN_ID || 1337,
-    name: 'besu-network'
-  }, 'istanbul');
-
-  const tx = new Tx(txObj, { common: custom });
-  tx.sign(Buffer.from(key, 'hex'));
-
-  console.log('Sending transaction...');
-  const receipt = await web3.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'));
-
-  console.log('Transaction Receipt:');
-  console.log(`  Transaction Hash: ${receipt.transactionHash}`);
-  console.log(`  Block Number: ${receipt.blockNumber}`);
-  console.log(`  Gas Used: ${receipt.gasUsed}/${gasLimit}`);
-  console.log(`  Status: ${receipt.status ? 'Success' : 'Failed'}`);
-
-  if (!receipt.status) throw new Error('Transaction failed');
-  return receipt;
-}
+// Local module no longer defines sendTransaction; it will be injected.
 
 // Routes for Employee module
-module.exports = (web3) => {
+module.exports = (web3, sendTransaction) => {
 
   // GET /employees - List all employees
   router.get('/', async (req, res) => {
@@ -146,7 +98,7 @@ module.exports = (web3) => {
       ).encodeABI();
 
       console.log(`\x1b[90m[EMPLOYEE]\x1b[0m Storing data for: \x1b[33m${recordId}\x1b[0m`);
-      const receipt = await sendTransaction(web3, privateKey, deployment.contractAddress, data);
+      const receipt = await sendTransaction(privateKey, deployment.contractAddress, data);
       console.log('\x1b[90m[EMPLOYEE]\x1b[0m \x1b[32m✓ Data stored successfully\x1b[0m');
 
       res.json({

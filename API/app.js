@@ -64,19 +64,53 @@ function loadContract(type) {
   return { contract: require(filePath), config };
 }
 
-// Transaction helper
+// Transaction helper with diagnostics & zero-gas option
 async function sendTransaction(privateKey, contractAddress, data, gasLimit = 800000) {
   const key = privateKey.replace(/^0x/, '');
   const account = web3.eth.accounts.privateKeyToAccount('0x' + key);
-  const nonce = await web3.eth.getTransactionCount(account.address, 'pending');
-  let gasPrice = await web3.eth.getGasPrice();
-  if (!gasPrice || gasPrice === '0') gasPrice = '1000000000';
+  const addr = account.address;
 
+  const latestNonce = await web3.eth.getTransactionCount(addr, 'latest');
+  const pendingNonce = await web3.eth.getTransactionCount(addr, 'pending');
+
+  // Gas price strategy: allow override & zero-gas.
+  let gasPrice = process.env.GAS_PRICE_OVERRIDE || await web3.eth.getGasPrice();
+  if (process.env.FORCE_ZERO_GAS === 'true') gasPrice = '0';
+  if (!gasPrice) gasPrice = '0';
+
+  // Estimate gas if calling a contract (not deployment) and we used default limit.
+  if (contractAddress && gasLimit === 800000) {
+    try {
+      const est = await web3.eth.estimateGas({ from: addr, to: contractAddress, data });
+      if (est && est + 50000 < gasLimit) gasLimit = est + 50000; // small safety buffer
+    } catch (e) {
+      console.warn('[sendTransaction] Gas estimation failed, continuing with provided gasLimit:', e.message);
+    }
+  }
+
+  const balanceWei = BigInt(await web3.eth.getBalance(addr));
+  const gp = BigInt(gasPrice);
+  const gl = BigInt(gasLimit);
+  const upfront = gp * gl; // value=0
+
+  console.log('[TX PREFLIGHT]');
+  console.log(' from:', addr);
+  console.log(' to:', contractAddress || '(deployment)');
+  console.log(' latestNonce:', latestNonce, 'pendingNonce:', pendingNonce);
+  console.log(' gasPrice:', gasPrice, 'gasLimit:', gasLimit);
+  console.log(' balanceWei:', balanceWei.toString());
+  console.log(' upfrontWei:', upfront.toString());
+
+  if (balanceWei < upfront) {
+    throw new Error(`Upfront cost exceeds balance. Need ${upfront} wei, have ${balanceWei} wei. Set FORCE_ZERO_GAS=true or lower gas usage.`);
+  }
+
+  const nonce = pendingNonce; // keep ordering
   const txObj = {
     nonce: web3.utils.toHex(nonce),
     gasPrice: web3.utils.toHex(gasPrice),
     gasLimit: web3.utils.toHex(gasLimit),
-    data: data,
+    data,
     to: contractAddress,
     chainId: BLOCKCHAIN_CHAIN_ID
   };
@@ -89,14 +123,11 @@ async function sendTransaction(privateKey, contractAddress, data, gasLimit = 800
 
   const tx = new Tx(txObj, { common: custom });
   tx.sign(Buffer.from(key, 'hex'));
-
-  const receipt = await web3.eth.sendSignedTransaction('0x' + tx.serialize().toString('hex'));
-
-  // Always show blockchain activity logs
-  console.log(`Transaction: ${receipt.transactionHash}, Block: ${receipt.blockNumber}, Status: ${receipt.status ? 'Success' : 'Failed'}`);
-
+  const raw = '0x' + tx.serialize().toString('hex');
+  console.log('[TX SEND] rawLength:', raw.length);
+  const receipt = await web3.eth.sendSignedTransaction(raw);
+  console.log(`[TX RESULT] hash=${receipt.transactionHash} block=${receipt.blockNumber} status=${receipt.status}`);
   if (!receipt.status) throw new Error('Transaction failed');
-
   return receipt;
 }
 
@@ -106,8 +137,8 @@ initUserRoutes(routeDependencies);
 initTaskRoutes(routeDependencies);
 initCompanyRoutes(routeDependencies);
 initAttendanceRoutes(routeDependencies);
-// Initialize employee routes (expects web3 directly)
-employeeRoutes = require('./routes-employee')(web3);
+// Initialize employee routes (now inject central sendTransaction)
+employeeRoutes = require('./routes-employee')(web3, sendTransaction);
 
 // CORE ROUTES
 app.get('/', (req, res) => {
