@@ -2,7 +2,7 @@ services:
   # Bootstrap/Bootnode (Node-1)
   node-1:
     container_name: node-1
-    image: hyperledger/besu
+    image: hyperledger/besu:25.7.0
     volumes:
       - ../genesis.json:/opt/besu/genesis.json
       - ../Node-1/data:/opt/besu/data
@@ -31,7 +31,7 @@ services:
   # Node-2
   node-2:
     container_name: node-2
-    image: hyperledger/besu
+    image: hyperledger/besu:25.7.0
     depends_on:
       node-1:
         condition: service_healthy
@@ -66,7 +66,7 @@ services:
   # Node-3
   node-3:
     container_name: node-3
-    image: hyperledger/besu
+    image: hyperledger/besu:25.7.0
     depends_on:
       node-1:
         condition: service_healthy
@@ -101,7 +101,7 @@ services:
   # Node-4
   node-4:
     container_name: node-4
-    image: hyperledger/besu
+    image: hyperledger/besu:25.7.0
     depends_on:
       node-1:
         condition: service_healthy
