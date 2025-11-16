@@ -11,8 +11,6 @@ services:
       - QE_CONFIG_PATH=/app/config.json
       - NODE_ENV=production
       - DISABLE_AUTH=true
-      - NEXTAUTH_URL=http://localhost:25000
-      - NEXTAUTH_URL_INTERNAL=http://localhost:25000
     volumes:
       - ./explorer-config.json:/app/config.json
     restart: unless-stopped

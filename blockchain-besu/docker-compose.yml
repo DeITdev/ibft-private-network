@@ -17,15 +17,8 @@ services:
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
       --host-allowlist="*"
-      --rpc-http-cors-origins="*"
+      --rpc-http-cors-origins="all"
       --profile=ENTERPRISE
-      --rpc-http-host=0.0.0.0
-      --p2p-host=172.16.239.11
-      --rpc-http-port=8545
-      --network-id=1337
-      --min-gas-price=0
-      --target-gas-limit=1000000000
-      --tx-pool-max-size=50000
       --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
@@ -58,15 +51,9 @@ services:
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
       --host-allowlist="*"
-      --rpc-http-cors-origins="*"
+      --rpc-http-cors-origins="all"
       --rpc-http-port=8546
       --profile=ENTERPRISE
-      --rpc-http-host=0.0.0.0
-      --p2p-host=172.16.239.12
-      --network-id=1337
-      --min-gas-price=0
-      --target-gas-limit=1000000000
-      --tx-pool-max-size=50000
       --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
@@ -99,15 +86,9 @@ services:
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
       --host-allowlist="*"
-      --rpc-http-cors-origins="*"
+      --rpc-http-cors-origins="all"
       --rpc-http-port=8547
       --profile=ENTERPRISE
-      --rpc-http-host=0.0.0.0
-      --p2p-host=172.16.239.13
-      --network-id=1337
-      --min-gas-price=0
-      --target-gas-limit=1000000000
-      --tx-pool-max-size=50000
       --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
@@ -140,15 +121,9 @@ services:
       --rpc-http-enabled=true
       --rpc-http-api=ETH,NET,IBFT,WEB3,DEBUG,ADMIN,TXPOOL
       --host-allowlist="*"
-      --rpc-http-cors-origins="*"
+      --rpc-http-cors-origins="all"
       --rpc-http-port=8548
       --profile=ENTERPRISE
-      --rpc-http-host=0.0.0.0
-      --p2p-host=172.16.239.14
-      --network-id=1337
-      --min-gas-price=0
-      --target-gas-limit=1000000000
-      --tx-pool-max-size=50000
       --revert-reason-enabled=true
     restart: unless-stopped
     healthcheck:
