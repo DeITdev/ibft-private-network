@@ -16,6 +16,7 @@ const { router: userRoutes, initUserRoutes } = require('./routes-user');
 const { router: taskRoutes, initTaskRoutes } = require('./routes-task');
 const { router: companyRoutes, initCompanyRoutes } = require('./routes-company');
 const { router: attendanceRoutes, initAttendanceRoutes } = require('./routes-attendance');
+const { router: simpleRoutes, initSimpleRoutes } = require('./routes-simple');
 // Employee routes use a slightly different export signature (function returning router)
 let employeeRoutes; // will be initialized after web3 creation
 
@@ -137,6 +138,7 @@ initUserRoutes(routeDependencies);
 initTaskRoutes(routeDependencies);
 initCompanyRoutes(routeDependencies);
 initAttendanceRoutes(routeDependencies);
+initSimpleRoutes(routeDependencies);
 // Initialize employee routes (now inject central sendTransaction)
 employeeRoutes = require('./routes-employee')(web3, sendTransaction);
 
@@ -149,7 +151,7 @@ app.get('/', (req, res) => {
     architecture: 'modular-routes',
     blockchain: { url: BLOCKCHAIN_URL, chainId: BLOCKCHAIN_CHAIN_ID },
     contracts: Object.keys(CONTRACTS),
-    routeModules: ['user', 'task', 'company', 'attendance', 'employee']
+    routeModules: ['user', 'task', 'company', 'attendance', 'simple', 'employee']
   });
 });
 
@@ -160,6 +162,7 @@ app.use('/users', userRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/companies', companyRoutes);
 app.use('/attendances', attendanceRoutes);
+app.use('/simple', simpleRoutes);
 app.use('/employees', employeeRoutes);
 
 // ERROR HANDLING & 404
@@ -182,7 +185,7 @@ const server = app.listen(PORT, HOST, async () => {
   console.log(`URL: http://localhost:${PORT}`);
   console.log('Architecture: Modular Routes (v2.0.0)');
   console.log(`Supported Contracts: ${Object.keys(CONTRACTS).join(', ')}`);
-  console.log('Route Modules: User, Task, Company, Attendance, Employee');
+  console.log('Route Modules: User, Task, Company, Attendance, Simple, Employee');
 
   try {
     const connected = await web3.eth.net.isListening();

@@ -2,14 +2,23 @@
   "success": true,
   "contractType": "simple",
   "contractName": "SimpleStorage",
-  "contractAddress": "0xBF921f94Fd9eF1738bE25D8CeCFDFE2C822c81B0",
-  "transactionHash": "0x61ed1587426a8dda0e118f336a1a2497cc4fd1fc3696241df682d886b937ca35",
-  "blockNumber": 4175,
-  "gasUsed": 133883,
-  "gasLimit": 202495,
+  "contractAddress": "0x51D4903ef5F871273e5B4172898B18809CFd7881",
+  "transactionHash": "0x691e91853d6658a9980f06872be6eddbbc0d3abefd5a73aefce99a3320a12c9e",
+  "blockNumber": 42042,
+  "blockHash": "0x45901a32adc64ed6edbf41cb6a029c3b334b6c9f9953db357e31e6813d18e31c",
+  "gasUsed": 113971,
+  "gasLimit": 138007,
+  "gasPrice": "1000000000",
   "deployerAddress": "0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73",
-  "deploymentTime": "2025-07-14T20:56:25.540Z",
+  "deploymentTime": "2025-11-15T11:33:39.181Z",
   "constructorArgs": [
-    123
-  ]
+    0
+  ],
+  "transactionDetails": {
+    "nonce": 42,
+    "cumulativeGasUsed": 113971,
+    "effectiveGasPrice": 1000000000,
+    "status": true,
+    "chainId": 1337
+  }
 }

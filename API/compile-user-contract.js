@@ -103,8 +103,3 @@ for (const fileName in output.contracts) {
     }
   }
 }
-
-console.log('\nNext steps:');
-console.log('1. Deploy via API: POST /deploy with contractType: "user"');
-console.log('2. Test contract interactions via user routes');
-console.log('3. Use /users endpoints to store and retrieve user data');

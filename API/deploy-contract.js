@@ -14,7 +14,7 @@ const Web3 = require('web3');
 
 // Contract config mapping (keep in sync with app.js)
 const CONTRACTS = {
-  simple: { name: 'SimpleStorage', file: 'SimpleStorage.json', defaultArgs: [], gasLimit: 5_000_000 },
+  simple: { name: 'SimpleStorage', file: 'SimpleStorage.json', defaultArgs: [0], gasLimit: 5_000_000 },
   employee: { name: 'EmployeeStorage', file: 'EmployeeStorage.json', defaultArgs: [], gasLimit: 8_000_000 },
   user: { name: 'UserStorage', file: 'UserStorage.json', defaultArgs: [], gasLimit: 8_000_000 },
   task: { name: 'TaskStorage', file: 'TaskStorage.json', defaultArgs: [], gasLimit: 8_000_000 },

@@ -86,8 +86,3 @@ if (compiledContract.evm.bytecode.object.length < 100) {
 } else {
   console.log('Bytecode looks valid');
 }
-
-console.log('\nNext steps:');
-console.log('1. Run: node compile-employee-contract.js');
-console.log('2. Start server: node app.js');
-console.log('3. Deploy via Postman using /deploy endpoint');

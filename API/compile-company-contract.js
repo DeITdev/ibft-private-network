@@ -103,8 +103,3 @@ for (const fileName in output.contracts) {
     }
   }
 }
-
-console.log('\nNext steps:');
-console.log('1. Start server: node app.js');
-console.log('2. Deploy via Postman using /deploy endpoint with contractType: "company"');
-console.log('3. Test company contract interactions');
