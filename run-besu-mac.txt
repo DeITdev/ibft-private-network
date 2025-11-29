@@ -1,3 +1,5 @@
+# Run Besu nodes on Mac
+
 Node-1
 besu --data-path=data --genesis-file=../genesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT --host-allowlist="*" --rpc-http-cors-origins="all" --profile=ENTERPRISE
 

@@ -1,0 +1,10 @@
+# working with truffle and besu
+
+# redeploy all smart contracts
+truffle migrate --reset --network besu
+
+# Clean and recompile
+rm -rf build/
+truffle compile
+
+# to see the smart contract address that was deployed besides in the console, you can also check it in the build folder. Search for "networks".
